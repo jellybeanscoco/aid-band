@@ -2,11 +2,7 @@ name = "aid-band"
 compatibility_date = "2026-11-23"
 pages_build_output_dir = "public"
 
-# Shared rescue registry (free Cloudflare D1).
-# Create it after logging in, then paste the id and uncomment:
-#   npx wrangler d1 create aid-band-db
-#   npx wrangler d1 execute aid-band-db --remote --file=schema.sql
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "aid-band-db"
-# database_id = ""
+[[d1_databases]]
+binding = "DB"
+database_name = "aid-band-db"
+database_id = "54d6cefc-d0d5-455f-b1ba-9d0438909d20"
