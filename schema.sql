@@ -11,6 +11,14 @@ CREATE TABLE IF NOT EXISTS people (
   status TEXT NOT NULL,
   shelter TEXT DEFAULT '',
   area TEXT DEFAULT '',
+  latitude REAL,
+  longitude REAL,
+  history TEXT DEFAULT '',
+  medications TEXT DEFAULT '',
+  allergies TEXT DEFAULT '',
+  photo TEXT DEFAULT '',
+  home_address TEXT DEFAULT '',
+  emergency_contacts TEXT DEFAULT '[]',
   updated_at TEXT NOT NULL
 );
 

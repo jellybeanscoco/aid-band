@@ -5,23 +5,17 @@ const SPEECH_LANG = { en: "en-GB", zh: "zh-HK", ne: "ne-NP", fr: "fr-FR" };
 const AI_LANG = { en: "English", zh: "Traditional Chinese", ne: "Nepali", fr: "French" };
 const SEX = ["female", "male", "other", "unknown"];
 const BLOOD = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown"];
-const SHELTERS = [
-  "Tap Seac Multisport Pavilion",
-  "Olympic Sports Centre",
-  "Areia Preta Sports Centre",
-  "MUST Sports Complex",
-  "Cotai East Pavilion",
-];
-const AREAS = [
-  "Macau Peninsula",
-  "Taipa",
-  "Coloane",
-  "Cotai",
-  "Nossa Senhora de Fátima",
-  "Santo António",
-  "São Lázaro",
-  "Sé",
-  "São Lourenço",
+const RESERVED_BANDS = ["AB-8101", "AB-8102", "AB-8103", "AB-8104", "AB-8105"];
+
+const SHELTER_PINS = [
+  { name: "Ilha Verde refuge", lat: 22.21158, lng: 113.53755 },
+  { name: "Portas do Cerco assembly point", lat: 22.21467, lng: 113.54893 },
+  { name: "Mong-Há Sports Centre", lat: 22.20664, lng: 113.55084 },
+  { name: "Tap Seac Multisport Pavilion", lat: 22.19664, lng: 113.54690 },
+  { name: "Macao Polytechnic University", lat: 22.19383, lng: 113.55152 },
+  { name: "Instituto Salesiano", lat: 22.18956, lng: 113.53713 },
+  { name: "Olympic Sports Centre", lat: 22.15353, lng: 113.55341 },
+  { name: "Public Security Forces School, Coloane", lat: 22.11958, lng: 113.55183 },
 ];
 
 const I18N = {
@@ -31,6 +25,9 @@ const I18N = {
     sample: "Sample",
     sex: "SEX", age: "AGE", ethnicity: "ETHNICITY", eye: "EYE COLOR",
     height: "HEIGHT", weight: "WEIGHT", blood: "BLOOD TYPE",
+    home: "HOME ADDRESS", contacts: "EMERGENCY CONTACTS",
+    relationship: "RELATIONSHIP", phone: "PHONE",
+    addContact: "ADD CONTACT", removeContact: "REMOVE",
     edit: "EDIT INFO", updated: "LAST UPDATED",
     upload: "UPLOAD MEDICAL RECORDS",
     formats1: "PDF/PNG/JPG-", formats2: "FORMAT SUPPORTED",
@@ -41,18 +38,48 @@ const I18N = {
     history: "Past Medical History:", meds: "Medications:", allergies: "Allergies:",
     none: "None recorded",
     caution: "THE INFORMATION ABOVE IS SUMMARISED WITH AI. USE WITH CAUTION.",
-    consult: "AI CONSULTANT", expand: "Expand chat", collapse: "Collapse chat",
-    chatCaution: "THIS ASSISTANT DOES NOT DIAGNOSE OR PRESCRIBE.",
-    briefEmpty: "Upload a medical record and I will list what a rescuer should double-check. I will not diagnose.",
+    consult: "AI CONSULTANT", expand: "Open chat", collapse: "Collapse chat", back: "BACK",
+    chatCaution: "",
+    briefEmpty: "Upload a medical record and I will explain the history, medicines, and allergies in plain language.",
     chatPh: "Ask what to double-check", send: "SEND",
     font: "FONT SIZE & ICON SIZE:", color: "COLOR BLINDNESS:",
     rgA: "Red", rgB: "Green", byA: "Blue", byB: "Yellow", mono: "Monochromacy",
     tts: "TEXT TO SPEECH:",
     ttsNote: "CHANGING TEXT LANGUAGE ALSO CHANGES AUDIO LANGUAGE",
     on: "ON", off: "OFF", close: "Close",
-    tabBand: "AID-BAND", tabRegistry: "RESCUE REGISTRY",
-    regIntro: "This is the registry for the disaster area. Tap a bracelet to check someone in. Search by traits to see if a person has been found, and which shelter they are at.",
+    tabBand: "AID-BAND", tabRegistry: "RESCUE DATABASE",
+    regIntro: "Green icons on the map represent the real location where a person's profile was added. Blue dots represent shelters near that area.",
+    mapEmpty: "No location has been recorded yet. Add a profile and allow location to place someone on the map.",
+    scan: "SCAN BRACELET",
+    addTitle: "Add this person to the rescue database?",
+    addYes: "YES, ADD", addNo: "NOT NOW",
+    locWaiting: "Asking this phone for its location…",
+    locDenied: "Location was not allowed. They can still be added, without a pin on the map.",
+    locReady: "Location recorded",
+    near: "Near",
+    accountPrivate: "This account stays on this phone until you add it to the rescue database.",
+    accountShared: "This profile is in the shared rescue database. Other phones can see it.",
+    shareProfile: "ADD TO RESCUE DATABASE",
+    updateShare: "UPDATE RESCUE DATABASE",
+    braceletLinkLabel: "THIS BRACELET OPENS",
+    copyLink: "COPY LINK",
+    copied: "Link copied. Write it onto the bracelet with an NFC app.",
+    braceletLinkHelp: "Add this profile to the rescue database, then write this link onto the bracelet. A scan opens this person on any phone.",
+    bandScope: "This page belongs to the bracelet. It is not the account saved on this phone.",
+    bandLoading: "Opening this bracelet…",
+    bandMissing: "This bracelet has no profile in the rescue database yet.",
+    bandMissingOwn: "This bracelet is yours, but the profile is not in the rescue database yet. Go back and add it.",
+    yourPhone: "YOUR PHONE",
+    thisBracelet: "THIS BRACELET",
+    bandReady: "This page already belongs to this bracelet. Fill in the profile here, then add it to the rescue database. Every phone that opens this link sees this person.",
+    saveBand: "SAVE ONTO BRACELET",
+    emptyBracelet: "This bracelet has no profile stored on it.",
+    added: "Added to the rescue database.",
+    legendShelter: "Shelter", legendPerson: "Person in the database",
     checkedIn: "CHECKED IN", notFound: "NOT YET FOUND",
+    addMissing: "ADD",
+    noFoundList: "No one is checked in yet.",
+    noMissingList: "No one is listed yet.",
     checkTitle: "CHECK IN A BRACELET",
     thisBand: "This phone’s bracelet:",
     noBand: "Save a profile on the AID-BAND page to give this phone a bracelet code.",
@@ -60,7 +87,9 @@ const I18N = {
     tap: "TAP NFC BRACELET", checkIn: "CHECK IN",
     registerMissing: "REGISTER AS NOT YET FOUND",
     writeNfc: "WRITE CODE TO BRACELET",
-    nfcUnsupported: "NFC needs Chrome on Android, over HTTPS. Enter the band code to check in from this device.",
+    nfcUnsupported: "NFC needs Chrome on Android, over HTTPS.",
+    nfcScanUnsupported: "This phone cannot scan a bracelet. Open AID-BAND and choose Add to rescue database.",
+    nfcWriteUnsupported: "This phone cannot write to a bracelet. Choose Add to rescue database instead.",
     nfcWaiting: "Hold the bracelet against the phone…",
     nfcDone: "Bracelet read. Confirm the shelter, then check in.",
     nfcWritten: "Band code written to the bracelet.",
@@ -71,25 +100,29 @@ const I18N = {
     noMatch: "No one in the registry matches those traits.",
     statusFound: "FOUND", statusMissing: "NOT YET FOUND",
     foundAt: "Shelter", showMissing: "SHOW PEOPLE NOT YET FOUND",
-    hideMissing: "HIDE LIST", emptyRegistry: "No bracelets have been added yet.",
+    hideMissing: "HIDE LIST", emptyRegistry: "No one has been added yet.",
     checkingRegistry: "Checking the registry…",
     sharedOk: "Shared across rescuers in this area.",
     deviceOnly: "Saved on this device only.",
     registryMiss: "Could not reach the shared registry. Showing the last copy saved on this device.",
-    needProfile: "Edit and save the bracelet profile before registering it.",
+    needProfile: "Edit and save the profile before adding it to the rescue database.",
     needShelter: "Add the shelter name before checking in.",
     savedProfile: "Profile saved.", registered: "Bracelet registered as not yet found.",
     alreadyFound: "This bracelet is already checked in.",
     checkedMsg: "Checked in.",
     photo: "PHOTO", save: "SAVE", cancel: "CANCEL",
     nameRequired: "A name is required.",
+    adminTitle: "CLINIC PASSWORD",
+    adminHint: "This password is for the clinic that issued the wristband.",
+    adminFail: "That password is not correct.",
+    unlock: "UNLOCK", password: "PASSWORD",
     sex_female: "Female", sex_male: "Male", sex_other: "Other", sex_unknown: "Unknown",
     ageHint: "Age matches within 3 years.",
     fileType: "Use a PDF, PNG, or JPG file.",
     fileSize: "That file is larger than 10 MB.",
     unreadable: "This file did not contain readable text. Try a clearer photo or a PDF with selectable text.",
-    aiFail: "The assistant did not respond. Nothing here is a diagnosis. Try again.",
-    aiBusy: "The free assistant is busy. Wait a minute and try again. Nothing here is a diagnosis.",
+    aiFail: "The assistant did not respond. Try again.",
+    aiBusy: "The free assistant is busy. Wait a minute and try again.",
     retry: "TRY AGAIN",
     results: "RESULTS", missingList: "NOT YET FOUND",
     unknownName: "Unknown",
@@ -102,6 +135,9 @@ const I18N = {
     sampleName: "示例姓名", sample: "示例",
     sex: "性別", age: "年齡", ethnicity: "族裔", eye: "眼睛顏色",
     height: "身高", weight: "體重", blood: "血型",
+    home: "住址", contacts: "緊急聯絡人",
+    relationship: "關係", phone: "電話",
+    addContact: "新增聯絡人", removeContact: "移除",
     edit: "編輯資料", updated: "最後更新",
     upload: "上傳病歷", formats1: "支援 PDF／PNG／JPG", formats2: "",
     drop: "上載或拖放檔案", reading: "正在讀取檔案…",
@@ -109,43 +145,79 @@ const I18N = {
     summary: "自然語言摘要", recent: "最近上載：", recentPh: "日/月/年 XX:XX",
     history: "過往病歷：", meds: "藥物：", allergies: "過敏：", none: "沒有記錄",
     caution: "以上資料由人工智能摘要，請謹慎使用。",
-    consult: "人工智能顧問", expand: "展開對話", collapse: "收合對話",
-    chatCaution: "此顧問不會診斷，也不會開藥。",
-    briefEmpty: "上載病歷後，我會列出救援人員應核對的事項。我不會作出診斷。",
+    consult: "人工智能顧問", expand: "開啟對話", collapse: "收合對話", back: "返回",
+    chatCaution: "",
+    briefEmpty: "上載病歷後，我會用淺白文字說明病歷、藥物和過敏。",
     chatPh: "詢問應核對的事項", send: "傳送",
     font: "字體大小與圖示大小：", color: "色覺：",
     rgA: "紅", rgB: "綠", byA: "藍", byB: "黃", mono: "全色盲",
     tts: "文字轉語音：", ttsNote: "更改文字語言亦會更改語音語言",
     on: "開", off: "關", close: "關閉",
-    tabBand: "護心帶", tabRegistry: "救援名冊",
-    regIntro: "這是災區名冊。輕觸手環即可登記入住。可用特徵搜尋某人是否已被找到，以及入住了哪一個庇護站。",
+    tabBand: "護心帶", tabRegistry: "救援資料庫",
+    regIntro: "地圖上的綠色圖示代表一個人的資料被加入時的真實位置。藍點代表該區域附近的庇護站。",
+    mapEmpty: "尚未記錄位置。加入個人資料並允許定位後，才會顯示在地圖上。",
+    scan: "掃描手環",
+    addTitle: "把這個人加入救援資料庫？",
+    addYes: "加入", addNo: "暫時不要",
+    locWaiting: "正在詢問這部手機的位置…",
+    locDenied: "未允許定位。仍可加入，但地圖上不會有標記。",
+    locReady: "已記錄位置",
+    near: "靠近",
+    accountPrivate: "此帳戶在你把它加入救援資料庫之前，只留在這部手機。",
+    accountShared: "此個人資料已在共用救援資料庫。其他手機可以查看。",
+    shareProfile: "加入救援資料庫",
+    updateShare: "更新救援資料庫",
+    braceletLinkLabel: "此手環會打開",
+    copyLink: "複製連結",
+    copied: "已複製連結。請用 NFC 應用程式寫入手環。",
+    braceletLinkHelp: "請先把個人資料加入救援資料庫，再把此連結寫入手環。任何手機掃描都會打開這個人的頁面。",
+    bandScope: "此頁屬於手環，不是這部手機上的帳戶。",
+    bandLoading: "正在打開此手環…",
+    bandMissing: "此手環在救援資料庫中還沒有個人資料。",
+    bandMissingOwn: "這是你的手環，但個人資料尚未加入救援資料庫。請返回並加入。",
+    yourPhone: "你的手機",
+    thisBracelet: "此手環",
+    bandReady: "此頁已經屬於這條手環。請在這裡填寫個人資料，再加入救援資料庫。任何手機打開此連結都會看到這個人。",
+    saveBand: "儲存到手環",
+    emptyBracelet: "此手環沒有儲存個人資料。",
+    added: "已加入救援資料庫。",
+    legendShelter: "庇護站", legendPerson: "已在資料庫的人",
     checkedIn: "已登記", notFound: "尚未找到",
+    addMissing: "加入",
+    noFoundList: "尚未有人登記。",
+    noMissingList: "尚未有人列入。",
     checkTitle: "手環登記", thisBand: "這部手機的手環：",
     noBand: "請先在護心帶頁面儲存個人資料，以取得手環編號。",
     bandCode: "手環編號", shelter: "庇護站", area: "地區",
     tap: "輕觸 NFC 手環", checkIn: "登記入住",
     registerMissing: "登記為尚未找到", writeNfc: "將編號寫入手環",
-    nfcUnsupported: "NFC 需在 Android 的 Chrome 並使用 HTTPS。請在此輸入手環編號。",
+    nfcUnsupported: "NFC 需在 Android 的 Chrome 並使用 HTTPS。",
+    nfcScanUnsupported: "這部手機不能掃描手環。請到護心帶頁面，選擇加入救援資料庫。",
+    nfcWriteUnsupported: "這部手機不能寫入手環。請改選加入救援資料庫。",
     nfcWaiting: "請將手環貼近手機…", nfcDone: "已讀取手環。請確認庇護站，然後登記。",
     nfcWritten: "編號已寫入手環。", nfcErr: "未能讀取手環，請改為輸入編號。",
     searchTitle: "以特徵搜尋", search: "搜尋", more: "更多特徵", less: "較少特徵", name: "姓名",
     noQuery: "請至少輸入一項特徵。", noMatch: "名冊中沒有符合這些特徵的人。",
     statusFound: "已找到", statusMissing: "尚未找到", foundAt: "庇護站",
     showMissing: "顯示尚未找到的人", hideMissing: "隱藏名單",
-    emptyRegistry: "尚未加入任何手環。", checkingRegistry: "正在檢查名冊…",
+    emptyRegistry: "尚未加入任何人。", checkingRegistry: "正在檢查名冊…",
     sharedOk: "此災區的救援人員可共同查看。", deviceOnly: "只儲存在這部裝置。",
     registryMiss: "未能連上共用名冊，現顯示這部裝置最後儲存的副本。",
-    needProfile: "請先編輯並儲存手環資料，再進行登記。",
+    needProfile: "請先編輯並儲存個人資料，再加入救援資料庫。",
     needShelter: "登記前請填寫庇護站名稱。", savedProfile: "資料已儲存。",
     registered: "已登記為尚未找到。", alreadyFound: "此手環已經登記入住。",
     checkedMsg: "已登記入住。", photo: "相片", save: "儲存", cancel: "取消",
     nameRequired: "必須填寫姓名。",
+    adminTitle: "診所密碼",
+    adminHint: "此密碼供發放手環的診所使用。",
+    adminFail: "密碼不正確。",
+    unlock: "解鎖", password: "密碼",
     sex_female: "女", sex_male: "男", sex_other: "其他", sex_unknown: "不詳",
     ageHint: "年齡會在三年範圍內配對。",
     fileType: "請使用 PDF、PNG 或 JPG 檔案。", fileSize: "檔案超過 10 MB。",
     unreadable: "檔案中沒有可讀文字。請改用更清晰的相片，或可選取文字的 PDF。",
-    aiFail: "顧問沒有回應。這裡沒有任何診斷。請再試一次。",
-    aiBusy: "免費顧問正忙。請稍候一分鐘再試。這裡沒有任何診斷。", retry: "再試一次",
+    aiFail: "顧問沒有回應。請再試一次。",
+    aiBusy: "免費顧問正忙。請稍候一分鐘再試。", retry: "再試一次",
     results: "結果", missingList: "尚未找到", unknownName: "不詳",
     langChanged: "語言已更改。", openSettings: "無障礙設定", cycleLang: "更改語言",
   },
@@ -154,6 +226,9 @@ const I18N = {
     sampleName: "नमूना नाम", sample: "नमूना",
     sex: "लिङ्ग", age: "उमेर", ethnicity: "जातीयता", eye: "आँखाको रंग",
     height: "उचाइ", weight: "तौल", blood: "रक्त समूह",
+    home: "घरको ठेगाना", contacts: "आपतकालीन सम्पर्क",
+    relationship: "नाता", phone: "फोन",
+    addContact: "सम्पर्क थप्नुहोस्", removeContact: "हटाउनुहोस्",
     edit: "विवरण सम्पादन", updated: "अन्तिम अद्यावधिक",
     upload: "चिकित्सा कागजात अपलोड", formats1: "PDF/PNG/JPG चल्छ", formats2: "",
     drop: "फाइल अपलोड वा झार्नुहोस्", reading: "फाइल पढिँदैछ…",
@@ -161,23 +236,55 @@ const I18N = {
     summary: "सामान्य भाषाको सारांश", recent: "पछिल्लो अपलोड:", recentPh: "दिन/महिना/वर्ष XX:XX",
     history: "पुरानो स्वास्थ्य इतिहास:", meds: "औषधि:", allergies: "एलर्जी:", none: "अभिलेख छैन",
     caution: "माथिको जानकारी एआईले सारांश गरेको हो। सतर्कता अपनाउनुहोस्।",
-    consult: "एआई सल्लाहकार", expand: "च्याट खोल्नुहोस्", collapse: "च्याट बन्द गर्नुहोस्",
-    chatCaution: "यो सल्लाहकारले निदान गर्दैन र औषधि पनि सिफारिस गर्दैन।",
-    briefEmpty: "चिकित्सा कागजात अपलोड गर्नुहोस्। म उद्धारकर्ताले के जाँच्ने भन्ने सूची दिन्छु। म निदान गर्दिन।",
+    consult: "एआई सल्लाहकार", expand: "च्याट खोल्नुहोस्", collapse: "च्याट बन्द गर्नुहोस्", back: "फर्कनुहोस्",
+    chatCaution: "",
+    briefEmpty: "चिकित्सा कागजात अपलोड गर्नुहोस्। म इतिहास, औषधि र एलर्जी सरल भाषामा बताउँछु।",
     chatPh: "के जाँच्ने सोध्नुहोस्", send: "पठाउनुहोस्",
     font: "अक्षर र आइकनको आकार:", color: "वर्णान्धता:",
     rgA: "रातो", rgB: "हरियो", byA: "नीलो", byB: "पहेँलो", mono: "पूर्ण वर्णान्धता",
     tts: "पाठबाट आवाज:", ttsNote: "पाठको भाषा बदल्दा आवाजको भाषा पनि बदलिन्छ",
     on: "खुला", off: "बन्द", close: "बन्द गर्नुहोस्",
-    tabBand: "एड-ब्यान्ड", tabRegistry: "उद्धार सूची",
-    regIntro: "यो विपद् क्षेत्रको सूची हो। ब्रेसलेट छोएर व्यक्तिलाई आश्रयमा दर्ता गर्नुहोस्। लक्षण खोजेर कोही भेटिएका छन् कि, र कुन आश्रयमा छन्, हेर्नुहोस्।",
+    tabBand: "एड-ब्यान्ड", tabRegistry: "उद्धार डाटाबेस",
+    regIntro: "नक्साका हरिया चिह्नले व्यक्तिको प्रोफाइल थपिएको वास्तविक स्थान देखाउँछन्। नीला चिह्न त्यस क्षेत्र नजिकका आश्रय हुन्।",
+    mapEmpty: "अहिलेसम्म स्थान रेकर्ड छैन। प्रोफाइल थप्नुहोस् र स्थान अनुमति दिनुहोस्।",
+    scan: "ब्रेसलेट स्क्यान",
+    addTitle: "यो व्यक्तिलाई उद्धार डाटाबेसमा थप्ने?",
+    addYes: "थप्नुहोस्", addNo: "अहिले होइन",
+    locWaiting: "यो फोनको स्थान मागिँदैछ…",
+    locDenied: "स्थान अनुमति छैन। थप्न मिल्छ, तर नक्सामा चिह्न हुँदैन।",
+    locReady: "स्थान रेकर्ड भयो",
+    near: "नजिक",
+    accountPrivate: "यो खाता उद्धार डाटाबेसमा नथप्दासम्म यसै फोनमा रहन्छ।",
+    accountShared: "यो प्रोफाइल साझा उद्धार डाटाबेसमा छ। अरू फोनले हेर्न सक्छन्।",
+    shareProfile: "उद्धार डाटाबेसमा थप्नुहोस्",
+    updateShare: "उद्धार डाटाबेस अद्यावधिक गर्नुहोस्",
+    braceletLinkLabel: "यो ब्रेसलेटले खोल्छ",
+    copyLink: "लिंक कपी",
+    copied: "लिंक कपी भयो। NFC एपले ब्रेसलेटमा लेख्नुहोस्।",
+    braceletLinkHelp: "पहिले प्रोफाइल उद्धार डाटाबेसमा थप्नुहोस्, अनि यो लिंक ब्रेसलेटमा लेख्नुहोस्। स्क्यान गर्दा जुनसुकै फोनमा यही व्यक्ति खुल्छ।",
+    bandScope: "यो पृष्ठ ब्रेसलेटको हो। यो फोनमा सुरक्षित खाता होइन।",
+    bandLoading: "यो ब्रेसलेट खोलिँदैछ…",
+    bandMissing: "यो ब्रेसलेटको प्रोफाइल उद्धार डाटाबेसमा छैन।",
+    bandMissingOwn: "यो तपाईंको ब्रेसलेट हो, तर प्रोफाइल अझै डाटाबेसमा छैन। फर्केर थप्नुहोस्।",
+    yourPhone: "तपाईंको फोन",
+    thisBracelet: "यो ब्रेसलेट",
+    bandReady: "यो पृष्ठ पहिले नै यो ब्रेसलेटको हो। यहाँ प्रोफाइल भर्नुहोस्, अनि उद्धार डाटाबेसमा थप्नुहोस्। यो लिंक खोल्ने हरेक फोनले यही व्यक्ति देख्छ।",
+    saveBand: "ब्रेसलेटमा सुरक्षित गर्नुहोस्",
+    emptyBracelet: "यो ब्रेसलेटमा प्रोफाइल छैन।",
+    added: "उद्धार डाटाबेसमा थपियो।",
+    legendShelter: "आश्रय", legendPerson: "डाटाबेसमा भएको व्यक्ति",
     checkedIn: "दर्ता भएका", notFound: "अझै नभेटिएका",
+    addMissing: "थप्नुहोस्",
+    noFoundList: "अहिलेसम्म कोही दर्ता भएको छैन।",
+    noMissingList: "अहिलेसम्म कोही सूचीमा छैन।",
     checkTitle: "ब्रेसलेट दर्ता", thisBand: "यो फोनको ब्रेसलेट:",
     noBand: "ब्रेसलेट कोड पाउन पहिले एड-ब्यान्ड पृष्ठमा प्रोफाइल सुरक्षित गर्नुहोस्।",
     bandCode: "ब्यान्ड कोड", shelter: "आश्रय", area: "क्षेत्र",
     tap: "NFC ब्रेसलेट छुनुहोस्", checkIn: "आश्रयमा दर्ता",
     registerMissing: "अझै नभेटिएको रूपमा दर्ता", writeNfc: "कोड ब्रेसलेटमा लेख्नुहोस्",
-    nfcUnsupported: "NFC का लागि Android को Chrome र HTTPS चाहिन्छ। यहाँ कोड टाइप गर्नुहोस्।",
+    nfcUnsupported: "NFC का लागि Android को Chrome र HTTPS चाहिन्छ।",
+    nfcScanUnsupported: "यो फोनले ब्रेसलेट स्क्यान गर्न सक्दैन। एड-ब्यान्ड पृष्ठमा गएर उद्धार डाटाबेसमा थप्नुहोस्।",
+    nfcWriteUnsupported: "यो फोनले ब्रेसलेटमा लेख्न सक्दैन। उद्धार डाटाबेसमा थप्नुहोस्।",
     nfcWaiting: "ब्रेसलेट फोनमा टाँस्नुहोस्…",
     nfcDone: "ब्रेसलेट पढियो। आश्रय पुष्टि गरेर दर्ता गर्नुहोस्।",
     nfcWritten: "कोड ब्रेसलेटमा लेखियो।", nfcErr: "ब्रेसलेट पढिएन। कोड टाइप गर्नुहोस्।",
@@ -185,20 +292,24 @@ const I18N = {
     noQuery: "कम्तीमा एउटा लक्षण लेख्नुहोस्।", noMatch: "यी लक्षणसँग कोही मिलेन।",
     statusFound: "भेटियो", statusMissing: "अझै भेटिएन", foundAt: "आश्रय",
     showMissing: "अझै नभेटिएका मानिस देखाउनुहोस्", hideMissing: "सूची लुकाउनुहोस्",
-    emptyRegistry: "अहिलेसम्म कुनै ब्रेसलेट थपिएको छैन।", checkingRegistry: "सूची जाँच हुँदैछ…",
+    emptyRegistry: "अहिलेसम्म कोही थपिएको छैन।", checkingRegistry: "सूची जाँच हुँदैछ…",
     sharedOk: "यस क्षेत्रका उद्धारकर्ताले सँगै हेर्न सक्छन्।", deviceOnly: "यो उपकरणमा मात्र सुरक्षित छ।",
     registryMiss: "साझा सूची जोडिएन। यस उपकरणको अन्तिम प्रति देखाइँदैछ।",
-    needProfile: "दर्ताअघि ब्रेसलेट प्रोफाइल सम्पादन गरेर सुरक्षित गर्नुहोस्।",
+    needProfile: "उद्धार डाटाबेसमा थप्नुअघि प्रोफाइल सम्पादन गरेर सुरक्षित गर्नुहोस्।",
     needShelter: "दर्ताअघि आश्रयको नाम लेख्नुहोस्।", savedProfile: "प्रोफाइल सुरक्षित भयो।",
     registered: "अझै नभेटिएको रूपमा दर्ता भयो।", alreadyFound: "यो ब्रेसलेट पहिले नै दर्ता भइसकेको छ।",
     checkedMsg: "दर्ता भयो।", photo: "फोटो", save: "सुरक्षित", cancel: "रद्द",
     nameRequired: "नाम आवश्यक छ।",
+    adminTitle: "क्लिनिक पासवर्ड",
+    adminHint: "यो पासवर्ड ब्रेसलेट दिने क्लिनिकका लागि हो।",
+    adminFail: "पासवर्ड मिलेन।",
+    unlock: "खोल्नुहोस्", password: "पासवर्ड",
     sex_female: "महिला", sex_male: "पुरुष", sex_other: "अन्य", sex_unknown: "अज्ञात",
     ageHint: "उमेर तीन वर्षको फरकभित्र मिल्छ।",
     fileType: "PDF, PNG, वा JPG प्रयोग गर्नुहोस्।", fileSize: "फाइल १० एमबीभन्दा ठूलो छ।",
     unreadable: "फाइलमा पढ्न मिल्ने पाठ भेटिएन। स्पष्ट फोटो वा पाठ छान्न मिल्ने PDF प्रयोग गर्नुहोस्।",
-    aiFail: "सल्लाहकारले जवाफ दिएन। यहाँ निदान छैन। फेरि प्रयास गर्नुहोस्।",
-    aiBusy: "निःशुल्क सल्लाहकार व्यस्त छ। एक मिनेटपछि फेरि प्रयास गर्नुहोस्। यहाँ निदान छैन।", retry: "फेरि प्रयास",
+    aiFail: "सल्लाहकारले जवाफ दिएन। फेरि प्रयास गर्नुहोस्।",
+    aiBusy: "निःशुल्क सल्लाहकार व्यस्त छ। एक मिनेटपछि फेरि प्रयास गर्नुहोस्।", retry: "फेरि प्रयास",
     results: "नतिजा", missingList: "अझै नभेटिएका", unknownName: "अज्ञात",
     langChanged: "भाषा बदलियो।", openSettings: "पहुँच सेटिङ", cycleLang: "भाषा बदल्नुहोस्",
   },
@@ -207,6 +318,9 @@ const I18N = {
     sampleName: "Nom d’exemple", sample: "Exemple",
     sex: "SEXE", age: "ÂGE", ethnicity: "ORIGINE", eye: "COULEUR DES YEUX",
     height: "TAILLE", weight: "POIDS", blood: "GROUPE SANGUIN",
+    home: "ADRESSE", contacts: "CONTACTS D'URGENCE",
+    relationship: "LIEN", phone: "TÉLÉPHONE",
+    addContact: "AJOUTER UN CONTACT", removeContact: "RETIRER",
     edit: "MODIFIER", updated: "DERNIÈRE MISE À JOUR",
     upload: "TÉLÉVERSER LE DOSSIER", formats1: "PDF/PNG/JPG", formats2: "FORMATS ACCEPTÉS",
     drop: "Téléverser ou déposer un fichier", reading: "Lecture du fichier…",
@@ -214,24 +328,56 @@ const I18N = {
     summary: "RÉSUMÉ EN LANGAGE CLAIR", recent: "Dernier envoi :", recentPh: "JOUR/MOIS/ANNÉE XX:XX",
     history: "Antécédents :", meds: "Médicaments :", allergies: "Allergies :", none: "Aucun élément noté",
     caution: "LES INFORMATIONS CI-DESSUS SONT RÉSUMÉES PAR IA. À UTILISER AVEC PRUDENCE.",
-    consult: "CONSEILLER IA", expand: "Ouvrir la discussion", collapse: "Réduire la discussion",
-    chatCaution: "CET ASSISTANT NE DIAGNOSTIQUE PAS ET NE PRESCRIT PAS.",
-    briefEmpty: "Téléversez un dossier et j’indiquerai ce qu’un secouriste doit vérifier. Je ne poserai pas de diagnostic.",
+    consult: "CONSEILLER IA", expand: "Ouvrir la discussion", collapse: "Réduire la discussion", back: "RETOUR",
+    chatCaution: "",
+    briefEmpty: "Téléversez un dossier et j’expliquerai les antécédents, les médicaments et les allergies en langage clair.",
     chatPh: "Demander quoi vérifier", send: "ENVOYER",
     font: "TAILLE DU TEXTE ET DES ICÔNES :", color: "DALTONISME :",
     rgA: "Rouge", rgB: "Vert", byA: "Bleu", byB: "Jaune", mono: "Monochromatisme",
     tts: "LECTURE VOCALE :", ttsNote: "CHANGER LA LANGUE DU TEXTE CHANGE AUSSI LA LANGUE AUDIO",
     on: "OUI", off: "NON", close: "Fermer",
-    tabBand: "AID-BAND", tabRegistry: "REGISTRE DE SECOURS",
-    regIntro: "Ceci est le registre de la zone sinistrée. Approchez un bracelet pour enregistrer une personne. Cherchez par signes distinctifs pour savoir si quelqu’un a été retrouvé, et dans quel abri.",
+    tabBand: "AID-BAND", tabRegistry: "BASE DE SECOURS",
+    regIntro: "Les icônes vertes indiquent le lieu réel où le profil d’une personne a été ajouté. Les points bleus indiquent les abris proches de cette zone.",
+    mapEmpty: "Aucune position enregistrée. Ajoutez un profil et autorisez la position pour placer quelqu’un sur la carte.",
+    scan: "SCANNER LE BRACELET",
+    addTitle: "Ajouter cette personne à la base de secours ?",
+    addYes: "OUI, AJOUTER", addNo: "PAS MAINTENANT",
+    locWaiting: "Demande de la position de ce téléphone…",
+    locDenied: "La position n’a pas été autorisée. L’ajout reste possible, sans point sur la carte.",
+    locReady: "Position enregistrée",
+    near: "Près de",
+    accountPrivate: "Ce compte reste sur ce téléphone jusqu’à ce que vous l’ajoutiez à la base de secours.",
+    accountShared: "Ce profil est dans la base de secours partagée. Les autres téléphones peuvent le voir.",
+    shareProfile: "AJOUTER À LA BASE DE SECOURS",
+    updateShare: "METTRE À JOUR LA BASE",
+    braceletLinkLabel: "CE BRACELET OUVRE",
+    copyLink: "COPIER LE LIEN",
+    copied: "Lien copié. Écrivez-le sur le bracelet avec une application NFC.",
+    braceletLinkHelp: "Ajoutez ce profil à la base de secours, puis écrivez ce lien sur le bracelet. Un scan ouvre cette personne sur n’importe quel téléphone.",
+    bandScope: "Cette page appartient au bracelet. Ce n’est pas le compte enregistré sur ce téléphone.",
+    bandLoading: "Ouverture de ce bracelet…",
+    bandMissing: "Ce bracelet n’a pas encore de profil dans la base de secours.",
+    bandMissingOwn: "Ce bracelet est le vôtre, mais le profil n’est pas encore dans la base. Revenez en arrière et ajoutez-le.",
+    yourPhone: "VOTRE TÉLÉPHONE",
+    thisBracelet: "CE BRACELET",
+    bandReady: "Cette page appartient déjà à ce bracelet. Remplissez le profil ici, puis ajoutez-le à la base de secours. Chaque téléphone qui ouvre ce lien verra cette personne.",
+    saveBand: "ENREGISTRER SUR LE BRACELET",
+    emptyBracelet: "Ce bracelet ne contient pas de profil.",
+    added: "Ajouté à la base de secours.",
+    legendShelter: "Abri", legendPerson: "Personne dans la base",
     checkedIn: "ENREGISTRÉS", notFound: "PAS ENCORE RETROUVÉS",
+    addMissing: "AJOUTER",
+    noFoundList: "Personne n’est encore enregistrée.",
+    noMissingList: "Personne n’est encore sur la liste.",
     checkTitle: "ENREGISTRER UN BRACELET", thisBand: "Bracelet de ce téléphone :",
     noBand: "Enregistrez un profil sur la page AID-BAND pour obtenir un code.",
     bandCode: "CODE", shelter: "ABRI", area: "ZONE",
     tap: "APPROCHER LE BRACELET", checkIn: "ENREGISTRER",
     registerMissing: "INSCRIRE COMME PAS ENCORE RETROUVÉ",
     writeNfc: "ÉCRIRE LE CODE SUR LE BRACELET",
-    nfcUnsupported: "Le NFC nécessite Chrome sur Android, en HTTPS. Saisissez le code sur cet appareil.",
+    nfcUnsupported: "Le NFC nécessite Chrome sur Android, en HTTPS.",
+    nfcScanUnsupported: "Ce téléphone ne peut pas scanner un bracelet. Ouvrez AID-BAND et choisissez Ajouter à la base de secours.",
+    nfcWriteUnsupported: "Ce téléphone ne peut pas écrire sur un bracelet. Choisissez Ajouter à la base de secours.",
     nfcWaiting: "Maintenez le bracelet contre le téléphone…",
     nfcDone: "Bracelet lu. Confirmez l’abri, puis enregistrez.",
     nfcWritten: "Code écrit sur le bracelet.",
@@ -242,23 +388,27 @@ const I18N = {
     noMatch: "Personne dans le registre ne correspond.",
     statusFound: "RETROUVÉ", statusMissing: "PAS ENCORE RETROUVÉ", foundAt: "Abri",
     showMissing: "AFFICHER LES PERSONNES PAS ENCORE RETROUVÉES",
-    hideMissing: "MASQUER LA LISTE", emptyRegistry: "Aucun bracelet n’a encore été ajouté.",
+    hideMissing: "MASQUER LA LISTE", emptyRegistry: "Personne n’a encore été ajoutée.",
     checkingRegistry: "Vérification du registre…",
     sharedOk: "Partagé entre les secouristes de cette zone.",
     deviceOnly: "Enregistré uniquement sur cet appareil.",
     registryMiss: "Registre partagé injoignable. Dernière copie de cet appareil affichée.",
-    needProfile: "Modifiez et enregistrez le profil avant de l’inscrire.",
+    needProfile: "Modifiez et enregistrez le profil avant de l’ajouter à la base de secours.",
     needShelter: "Indiquez le nom de l’abri avant d’enregistrer.",
     savedProfile: "Profil enregistré.", registered: "Inscrit comme pas encore retrouvé.",
     alreadyFound: "Ce bracelet est déjà enregistré dans un abri.",
     checkedMsg: "Enregistré.", photo: "PHOTO", save: "ENREGISTRER", cancel: "ANNULER",
     nameRequired: "Le nom est obligatoire.",
+    adminTitle: "MOT DE PASSE CLINIQUE",
+    adminHint: "Ce mot de passe est réservé à la clinique qui a remis le bracelet.",
+    adminFail: "Ce mot de passe est incorrect.",
+    unlock: "DÉVERROUILLER", password: "MOT DE PASSE",
     sex_female: "Femme", sex_male: "Homme", sex_other: "Autre", sex_unknown: "Inconnu",
     ageHint: "L’âge correspond à trois ans près.",
     fileType: "Utilisez un fichier PDF, PNG ou JPG.", fileSize: "Ce fichier dépasse 10 Mo.",
     unreadable: "Aucun texte lisible dans ce fichier. Essayez une photo plus nette ou un PDF avec du texte sélectionnable.",
-    aiFail: "L’assistant n’a pas répondu. Ceci n’est pas un diagnostic. Réessayez.",
-    aiBusy: "L’assistant gratuit est occupé. Réessayez dans une minute. Ceci n’est pas un diagnostic.",
+    aiFail: "L’assistant n’a pas répondu. Réessayez.",
+    aiBusy: "L’assistant gratuit est occupé. Réessayez dans une minute.",
     retry: "RÉESSAYER", results: "RÉSULTATS", missingList: "PAS ENCORE RETROUVÉS",
     unknownName: "Inconnu", langChanged: "Langue modifiée.",
     openSettings: "Réglages d’accessibilité", cycleLang: "Changer de langue",
@@ -268,8 +418,72 @@ const I18N = {
 function defaultProfile() {
   return {
     saved: false, bandId: "", name: "", sex: "", age: "", ethnicity: "",
-    eyeColor: "", height: "", weight: "", bloodType: "", photo: "", updatedAt: "",
+    eyeColor: "", height: "", weight: "", bloodType: "", homeAddress: "",
+    emergencyContacts: [], photo: "", updatedAt: "",
   };
+}
+
+function emptyMissingDraft() {
+  return {
+    name: "", sex: "", age: "", ethnicity: "", eyeColor: "", height: "", weight: "",
+    bloodType: "", homeAddress: "", emergencyContacts: [],
+  };
+}
+
+function contactsFrom(value) {
+  let list = value;
+  if (typeof list === "string") {
+    try { list = JSON.parse(list); } catch { list = []; }
+  }
+  if (!Array.isArray(list)) return [];
+  return list.slice(0, 3).map((item) => ({
+    name: String((item && item.name) || "").trim().slice(0, 80),
+    relationship: String((item && item.relationship) || "").trim().slice(0, 40),
+    phone: String((item && item.phone) || "").trim().slice(0, 40),
+  }));
+}
+
+function filledContacts(value) {
+  return contactsFrom(value).filter((item) => item.name || item.relationship || item.phone);
+}
+
+function contactText(contacts) {
+  return filledContacts(contacts)
+    .map((item) => [item.name, item.relationship, item.phone].filter(Boolean).join(", "))
+    .join(" · ");
+}
+
+const ADMIN_KEY = "aidband-admin";
+
+function adminToken() {
+  try {
+    const token = sessionStorage.getItem(ADMIN_KEY) || "";
+    if (!token || !clientTokenFresh(token)) {
+      if (token) sessionStorage.removeItem(ADMIN_KEY);
+      return "";
+    }
+    return token;
+  } catch {
+    return "";
+  }
+}
+
+function clientTokenFresh(token) {
+  const parts = String(token).split(".");
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
+  try {
+    const padded = parts[0].replace(/-/g, "+").replace(/_/g, "/");
+    const pad = padded.length % 4 === 0 ? "" : "=".repeat(4 - (padded.length % 4));
+    const json = JSON.parse(atob(padded + pad));
+    return Boolean(json && typeof json.exp === "number" && json.exp > Date.now());
+  } catch {
+    return false;
+  }
+}
+
+function clearAdminToken() {
+  try { sessionStorage.removeItem(ADMIN_KEY); } catch { /* this tab stays locked */ }
+  state.adminOk = false;
 }
 
 function defaultRecord() {
@@ -300,7 +514,22 @@ const state = {
     bandId: "", showMore: false, results: null, ran: false,
   },
   showMissing: false,
+  showFound: false,
+  openProfiles: {},
+  missingDraft: emptyMissingDraft(),
+  missingError: "",
   people: [],
+  adminPassword: "",
+  adminError: "",
+  adminPurpose: "",
+  adminOk: false,
+  adminChecking: false,
+  adminBusy: false,
+  pendingAdd: null,
+  bandNote: "",
+  scanNote: "",
+  bandPage: null,
+  bandPageStatus: "",
   shared: false,
   triedBackend: false,
   registryNoteKey: "checkingRegistry",
@@ -320,27 +549,81 @@ function esc(value) {
   }[ch]));
 }
 
+function repairText(value) {
+  return String(value ?? "")
+    .replace(/&amp;#39;|&#39;|&#x27;|&apos;|&amp;39;|&39;/gi, "'")
+    .replace(/&quot;/gi, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+function shapeReply(value) {
+  let text = repairText(value).replace(/\r\n/g, "\n").trim();
+  text = text.replace(/\*\*([^*]+)\*\*/g, "$1").replace(/__([^_]+)__/g, "$1");
+  text = text.replace(/(^|\s)\*([^*\n]+)\*(?=\s|[.,!?]|$)/g, "$1$2");
+  text = text.replace(/^#{1,6}\s+/gm, "");
+  text = text.replace(/^\s*[•*]\s+/gm, "- ");
+  return text;
+}
+
 function rich(value) {
-  return esc(value).replace(/\n/g, "<br>");
+  const inline = (line) => esc(repairText(line));
+  const lines = repairText(value).replace(/\r\n/g, "\n").split("\n");
+  let html = "";
+  let list = "";
+  const flush = () => {
+    if (!list) return;
+    html += `<ul>${list}</ul>`;
+    list = "";
+  };
+  lines.forEach((line) => {
+    const trimmed = line.trim();
+    const bullet = trimmed.match(/^(?:[-*+]|\d+\.)\s+(.*)$/);
+    if (!trimmed) {
+      flush();
+      return;
+    }
+    if (bullet) {
+      list += `<li>${inline(bullet[1])}</li>`;
+      return;
+    }
+    flush();
+    html += `<p>${inline(trimmed.replace(/^#{1,6}\s+/, ""))}</p>`;
+  });
+  flush();
+  return html;
+}
+
+function applySavedBundle(saved) {
+  state.profile = { ...defaultProfile(), ...(saved.profile || {}) };
+  state.profile.homeAddress = String(state.profile.homeAddress || "");
+  state.profile.emergencyContacts = contactsFrom(state.profile.emergencyContacts);
+  state.record = { ...defaultRecord(), ...(saved.record || {}) };
+  state.record.summary = {
+    pastMedicalHistory: [],
+    medications: [],
+    allergies: [],
+    ...(saved.record && saved.record.summary),
+  };
+  state.brief = saved.brief || "";
+  state.chat = Array.isArray(saved.chat) ? saved.chat : [];
+  if (saved.settings) state.settings = { ...state.settings, ...(saved.settings || {}) };
+  state.checkin.shelter = saved.shelter || "";
+  state.checkin.area = saved.area || "";
 }
 
 function load() {
+  const id = bandRoute();
   try {
-    const saved = JSON.parse(localStorage.getItem("aidband-state") || "null");
-    if (saved) {
-      state.profile = { ...defaultProfile(), ...(saved.profile || {}) };
-      state.record = { ...defaultRecord(), ...(saved.record || {}) };
-      state.record.summary = {
-        pastMedicalHistory: [],
-        medications: [],
-        allergies: [],
-        ...(saved.record && saved.record.summary),
-      };
-      state.brief = saved.brief || "";
-      state.chat = Array.isArray(saved.chat) ? saved.chat : [];
-      state.settings = { ...state.settings, ...(saved.settings || {}) };
-      state.checkin.shelter = saved.shelter || "";
-      state.checkin.area = saved.area || "";
+    const phone = JSON.parse(localStorage.getItem("aidband-state") || "null");
+    if (id) {
+      if (phone?.settings) state.settings = { ...state.settings, ...phone.settings };
+      const draft = JSON.parse(localStorage.getItem(`aidband-band-${id}`) || "null");
+      if (draft) applySavedBundle(draft);
+      state.profile.bandId = id;
+    } else if (phone) {
+      applySavedBundle(phone);
     }
     const people = JSON.parse(localStorage.getItem("aidband-people") || "[]");
     if (Array.isArray(people)) state.people = people;
@@ -348,6 +631,7 @@ function load() {
     /* keep defaults */
   }
   if (!LANGS.includes(state.settings.lang)) state.settings.lang = "en";
+  if (adminToken()) state.adminChecking = true;
 }
 
 function persist() {
@@ -355,7 +639,7 @@ function persist() {
     ...state.record,
     sourceText: (state.record.sourceText || "").slice(0, 20000),
   };
-  localStorage.setItem("aidband-state", JSON.stringify({
+  const bundle = {
     profile: state.profile,
     record,
     brief: state.brief,
@@ -363,8 +647,21 @@ function persist() {
     settings: state.settings,
     shelter: state.checkin.shelter,
     area: state.checkin.area,
-  }));
-  localStorage.setItem("aidband-people", JSON.stringify(state.people));
+  };
+  const id = bandRoute();
+  try {
+    if (id) {
+      localStorage.setItem(`aidband-band-${id}`, JSON.stringify(bundle));
+      const phone = JSON.parse(localStorage.getItem("aidband-state") || "{}");
+      phone.settings = state.settings;
+      localStorage.setItem("aidband-state", JSON.stringify(phone));
+    } else {
+      localStorage.setItem("aidband-state", JSON.stringify(bundle));
+    }
+    localStorage.setItem("aidband-people", JSON.stringify(state.people));
+  } catch {
+    /* keep the profile on screen if this phone is out of storage */
+  }
 }
 
 function announce(text) {
@@ -391,8 +688,8 @@ function formatStamp(iso) {
 function heartSVG() {
   return `<svg viewBox="0 0 64 64" aria-hidden="true">
     <circle cx="32" cy="32" r="32" fill="#fff"/>
-    <path fill="currentColor" d="M32 50.5c-.7 0-16-12-16-23.2C16 21.2 20.1 17 25 17c3.2 0 5.4 1.6 7 4 1.6-2.4 3.8-4 7-4 4.9 0 9 4.2 9 10.3 0 11.2-15.3 23.2-16 23.2z"/>
-    <path fill="#fff" d="M29.2 24.4h5.6v5.2h5.2v5.6h-5.2v5.2h-5.6v-5.2h-5.2v-5.6h5.2z"/>
+    <path d="M32 47.2c-7.2-5.2-15.2-11.2-15.2-19 0-5 3.8-8.6 8.4-8.6 2.8 0 4.8 1.3 6.8 3.6 2-2.3 4-3.6 6.8-3.6 4.6 0 8.4 3.6 8.4 8.6 0 7.8-8 13.8-15.2 19z" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <path d="M29.5 24.6h5v4.4h4.4v5h-4.4v4.4h-5v-4.4h-4.4v-5h4.4z" fill="#fff" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
   </svg>`;
 }
 
@@ -424,13 +721,23 @@ function applyChrome() {
   document.documentElement.classList.toggle("modal-open", Boolean(state.modal));
 }
 
+let mapHandle = null;
+let shownHash = location.hash;
+
 function render() {
   const y = window.scrollY;
+  const enteringChat = location.hash === "#consultant" && shownHash !== "#consultant";
   const prev = document.activeElement?.dataset?.focus || null;
+  if (mapHandle) {
+    mapHandle.remove();
+    mapHandle = null;
+  }
   applyChrome();
   document.getElementById("app").innerHTML = shell();
   document.getElementById("modal-root").innerHTML = modalHTML();
-  window.scrollTo(0, y);
+  window.scrollTo(0, enteringChat ? 0 : y);
+  shownHash = location.hash;
+  mountMap();
   const thread = document.querySelector(".thread");
   if (thread) thread.scrollTop = thread.scrollHeight;
   if (state.returnFocus) {
@@ -445,8 +752,26 @@ function render() {
   }
 }
 
+function bandRoute() {
+  const match = location.pathname.match(/^\/b\/([A-Za-z0-9-]{3,24})\/?$/);
+  return match ? match[1].toUpperCase() : "";
+}
+
+function bandUrl(id) {
+  return `${location.origin}/b/${id}`;
+}
+
 function shell() {
-  const registry = location.hash === "#registry";
+  const onBracelet = Boolean(bandRoute());
+  const chat = location.hash === "#consultant";
+  const registry = !onBracelet && location.hash === "#registry";
+  const page = chat
+    ? consultantPage()
+    : onBracelet && !braceletEditable()
+      ? braceletView()
+      : registry
+        ? registryView()
+        : bandView();
   return `
     <a class="skip" href="#content">${esc(t("skip"))}</a>
     <header class="header">
@@ -466,12 +791,19 @@ function shell() {
       </div>
     </header>
     <nav class="switch" aria-label="AID-BAND">
-      <a href="#band" ${registry ? "" : 'aria-current="page"'}>${esc(t("tabBand"))}</a>
-      <a href="#registry" ${registry ? 'aria-current="page"' : ""}>${esc(t("tabRegistry"))}</a>
+      <a href="/" ${!registry && !onBracelet && !chat ? 'aria-current="page"' : ""}>${esc(t("tabBand"))}</a>
+      <a href="/#registry" ${registry ? 'aria-current="page"' : ""}>${esc(t("tabRegistry"))}</a>
     </nav>
     <main id="content">
-      ${registry ? registryView() : bandView()}
+      ${page}
     </main>`;
+}
+
+function braceletEditable() {
+  const id = bandRoute();
+  if (!id) return false;
+  if (state.profile.saved && state.profile.bandId === id) return true;
+  return state.bandPageStatus === "missing";
 }
 
 function bandView() {
@@ -482,6 +814,7 @@ function bandView() {
   return `
     <div class="view-band">
       <div class="stack">
+        ${bandRoute() ? `<p class="intro">${esc(t("thisBracelet"))} ${esc(bandRoute())}</p>${p.saved ? "" : `<p class="intro">${esc(t("bandReady"))}</p>`}` : ""}
         <article class="card">
           <div class="profile-top">
             <div class="avatar">${photo}</div>
@@ -495,17 +828,120 @@ function bandView() {
                 <li>${esc(t("height"))}: ${esc(shown(p.height))}</li>
                 <li>${esc(t("weight"))}: ${esc(shown(p.weight))}</li>
                 <li>${esc(t("blood"))}: ${esc(shown(p.bloodType))}</li>
+                <li>${esc(t("home"))}: ${esc(shown(p.homeAddress))}</li>
+                <li>${esc(t("contacts"))}: ${esc(shown(contactText(p.emergencyContacts)))}</li>
               </ul>
             </div>
             <p class="updated">${esc(t("updated"))}: ${esc(p.saved ? formatDate(p.updatedAt) : "XX/XX/XXXX")}</p>
             <button class="edit-btn" type="button" data-action="edit" data-focus="open-edit">${esc(t("edit"))}</button>
           </div>
+          ${p.saved ? `<p class="account-note">${esc(profileIsShared() ? t("accountShared") : t("accountPrivate"))}</p>
+          <button class="pill-btn share-btn" type="button" data-action="share-profile" data-focus="share">${esc(profileIsShared() ? t("updateShare") : t("shareProfile"))}</button>
+          <p class="account-note">${esc(t("braceletLinkLabel"))}</p>
+          <a class="band-link" href="${esc(bandUrl(p.bandId))}">${esc(bandUrl(p.bandId))}</a>
+          <button class="text-btn light" type="button" data-action="copy-link">${esc(t("copyLink"))}</button>
+          <p class="account-note">${esc(t("braceletLinkHelp"))}</p>
+          ${state.bandNote ? `<p class="account-note">${esc(state.bandNote)}</p>` : ""}` : ""}
         </article>
         ${uploadBlock()}
         ${summaryBlock()}
       </div>
       ${consultantBlock()}
     </div>`;
+}
+
+function braceletView() {
+  const id = bandRoute();
+  if (state.bandPageStatus === "loading" || state.bandPageStatus === "") {
+    return `<p class="intro">${esc(t("bandLoading"))}</p>`;
+  }
+  if (state.bandPageStatus === "error") {
+    return `<p class="intro">${esc(t("registryMiss"))}</p>`;
+  }
+  if (state.bandPageStatus !== "ready" || !state.bandPage) {
+    const own = state.profile.saved && state.profile.bandId === id;
+    return `
+      <div class="view-registry">
+        <p class="intro">${esc(t("thisBracelet"))} ${esc(id)}</p>
+        <p class="intro">${esc(t("bandScope"))}</p>
+        <p class="intro">${esc(t(own ? "bandMissingOwn" : "bandMissing"))}</p>
+        <a class="pill-btn" href="/">${esc(t("yourPhone"))}</a>
+      </div>`;
+  }
+  const p = state.bandPage;
+  const place = [p.area, p.shelter].filter(Boolean).join(" · ");
+  const point = personCoords(p);
+  const where = [place, point ? `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}` : ""].filter(Boolean).join(" · ");
+  const row = (label, value) => `<li>${esc(label)}: ${esc(value || "—")}</li>`;
+  const listed = (title, items) => `<h3>${esc(title)}</h3>${
+    items && items.length
+      ? `<ol>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ol>`
+      : `<p class="none">${esc(t("none"))}</p>`
+  }`;
+  return `
+    <div class="view-band">
+      <div class="stack">
+        <p class="intro">${esc(t("thisBracelet"))} ${esc(id)}</p>
+        <p class="intro">${esc(t("bandScope"))}</p>
+        <article class="card">
+          <div class="profile-top">
+            <div class="avatar">${p.photo ? `<img src="${esc(p.photo)}" alt="">` : personSVG()}</div>
+            <div class="facts">
+              <h2>${esc(p.name || t("unknownName"))}</h2>
+              <ul>
+                ${row(t("sex"), p.sex ? t("sex_" + p.sex) : "—")}
+                ${row(t("age"), p.age)}
+                ${row(t("ethnicity"), p.ethnicity)}
+                ${row(t("eye"), p.eyeColor)}
+                ${row(t("height"), p.height)}
+                ${row(t("weight"), p.weight)}
+                ${row(t("blood"), p.bloodType)}
+                ${row(t("home"), p.homeAddress)}
+                ${row(t("contacts"), contactText(p.emergencyContacts))}
+              </ul>
+            </div>
+            <p class="updated">${esc(t("updated"))}: ${esc(p.updatedAt ? formatDate(p.updatedAt) : "—")}</p>
+          </div>
+          ${where ? `<p class="account-note">${esc(where)}</p>` : ""}
+        </article>
+        <article class="card summary">
+          <div class="summary-head">
+            <h2>${esc(t("summary"))}</h2>
+            <span class="mini-heart" aria-hidden="true">${heartSVG()}</span>
+          </div>
+          ${listed(t("history"), p.history)}
+          ${listed(t("meds"), p.medications)}
+          ${listed(t("allergies"), p.allergies)}
+          <p class="disclaimer">${esc(t("caution"))}</p>
+        </article>
+      </div>
+    </div>`;
+}
+
+async function loadBandPage(id) {
+  state.bandPageStatus = "loading";
+  state.bandPage = null;
+  render();
+  try {
+    const res = await fetch(`/api/people?bandId=${encodeURIComponent(id)}`, { cache: "no-store" });
+    if (res.status === 404) {
+      state.bandPageStatus = "missing";
+      state.bandPage = null;
+    } else if (!res.ok) {
+      state.bandPageStatus = "error";
+    } else {
+      const data = await res.json();
+      state.bandPage = data.person || null;
+      state.bandPageStatus = state.bandPage ? "ready" : "missing";
+      if (state.bandPage?.photo && state.profile.saved && state.profile.bandId === id && !state.profile.photo) {
+        state.profile.photo = state.bandPage.photo;
+        persist();
+      }
+    }
+  } catch {
+    state.bandPageStatus = "error";
+  }
+  render();
 }
 
 function uploadBlock() {
@@ -562,73 +998,141 @@ function summaryBlock() {
     </article>`;
 }
 
-function consultantBlock() {
-  const brief = state.busy && state.busyText === t("briefing")
-    ? state.busyText
-    : (state.brief || t("briefEmpty"));
-  const thread = state.chatExpanded && state.chat.length
-    ? `<div class="thread">${state.chat.map(messageHTML).join("")}</div>`
-    : "";
-  const composer = state.chatExpanded ? `
+function briefText() {
+  if (state.busy && state.busyText === t("briefing")) return state.busyText;
+  return state.brief || t("briefEmpty");
+}
+
+function chatThread() {
+  return state.chat.length ? `<div class="thread">${state.chat.map(messageHTML).join("")}</div>` : "";
+}
+
+function chatComposer() {
+  return `
     <form class="composer" data-form="chat">
       <input name="draft" data-field="chatDraft" data-focus="chat-draft" value="${esc(state.chatDraft)}" placeholder="${esc(t("chatPh"))}" maxlength="600" ${state.chatBusy ? "disabled" : ""}>
       <button type="submit" ${state.chatBusy ? "disabled" : ""}>${esc(state.chatBusy ? "…" : t("send"))}</button>
-    </form>` : "";
+    </form>`;
+}
+
+function consultantBlock() {
   return `
     <section class="consultant" aria-label="${esc(t("consult"))}">
       <h2>${esc(t("consult"))}</h2>
-      <button class="expand" type="button" data-action="expand" data-focus="expand" aria-expanded="${state.chatExpanded}" aria-label="${esc(state.chatExpanded ? t("collapse") : t("expand"))}">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5H7z"/></svg>
-      </button>
+      <a class="expand" href="#consultant" data-focus="expand" aria-label="${esc(t("expand"))}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 6l6 6-6 6H9z"/></svg>
+      </a>
       <div class="chat-panel">
         <div class="msg assistant">
           <span class="bubble-logo" aria-hidden="true">${heartSVG()}</span>
-          <div class="speech">${rich(brief)}</div>
+          <div class="speech">${rich(briefText())}</div>
         </div>
-        <p class="fine">${esc(t("chatCaution"))}</p>
-        ${thread}
-        ${composer}
       </div>
     </section>`;
+}
+
+function consultantPage() {
+  return `
+    <div class="view-chat">
+      <a class="back-link" href="${esc(location.pathname)}">${esc(t("back"))}</a>
+      <h2>${esc(t("consult"))}</h2>
+      <div class="chat-panel">
+        <div class="msg assistant">
+          <span class="bubble-logo" aria-hidden="true">${heartSVG()}</span>
+          <div class="speech">${rich(briefText())}</div>
+        </div>
+        ${chatThread()}
+        ${chatComposer()}
+      </div>
+    </div>`;
 }
 
 function messageHTML(message) {
   if (message.role === "user") {
     return `<div class="msg user"><div class="speech">${rich(message.content)}</div></div>`;
   }
-  return `<div class="msg assistant"><span class="bubble-logo" aria-hidden="true">${heartSVG()}</span><div class="speech">${rich(message.content)}</div></div>`;
+  return `<div class="msg assistant"><span class="bubble-logo" aria-hidden="true">${heartSVG()}</span><div class="speech">${rich(shapeReply(message.content))}</div></div>`;
+}
+
+function contactBlock(group, contacts) {
+  const rows = contactsFrom(contacts);
+  const items = rows.map((contact, index) => `
+    <div class="contact-row">
+      ${field(`${group}.emergencyContacts.${index}.name`, t("name"), contact.name)}
+      ${field(`${group}.emergencyContacts.${index}.relationship`, t("relationship"), contact.relationship)}
+      ${field(`${group}.emergencyContacts.${index}.phone`, t("phone"), contact.phone, "tel")}
+      <button class="text-btn" type="button" data-action="remove-contact" data-group="${esc(group)}" data-index="${index}">${esc(t("removeContact"))}</button>
+    </div>`).join("");
+  const add = rows.length >= 3 ? "" : `<button class="text-btn" type="button" data-action="add-contact" data-group="${esc(group)}">${esc(t("addContact"))}</button>`;
+  return `
+    <div class="contact-block">
+      <p class="contact-label">${esc(t("contacts"))}</p>
+      ${items}
+      ${add}
+    </div>`;
+}
+
+function adminForm(inModal) {
+  return `
+    ${state.adminError ? `<p class="form-error">${esc(state.adminError)}</p>` : ""}
+    <form data-form="admin">
+      <label class="field">${labelSpan(t("password"))}
+        <input data-field="adminPassword" data-focus="admin-password" type="password" autocomplete="current-password" value="${esc(state.adminPassword)}">
+      </label>
+      <div class="actions">
+        <button class="${inModal ? "primary" : "pill-btn"}" type="submit" data-focus="admin-unlock">${esc(t("unlock"))}</button>
+        ${inModal ? `<button class="ghost" type="button" data-action="close">${esc(t("cancel"))}</button>` : ""}
+      </div>
+    </form>`;
+}
+
+function adminGate() {
+  return `
+    <div class="view-registry">
+      <article class="panel admin-gate">
+        <h2>${esc(t("adminTitle"))}</h2>
+        <p class="admin-hint">${esc(t("adminHint"))}</p>
+        ${adminForm(false)}
+      </article>
+    </div>`;
+}
+
+function adminModal() {
+  return `
+    <div class="backdrop" data-action="backdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="admin-title" tabindex="-1">
+        <div class="set-row">
+          <h2 id="admin-title">${esc(t("adminTitle"))}</h2>
+          <button class="close" type="button" data-action="close" aria-label="${esc(t("close"))}">×</button>
+        </div>
+        <p class="who-line">${esc(t("adminHint"))}</p>
+        ${adminForm(true)}
+      </div>
+    </div>`;
 }
 
 function registryView() {
+  if (!state.adminOk) {
+    if (state.adminChecking && adminToken()) {
+      return `<div class="view-registry"><p class="intro">${esc(t("checkingRegistry"))}</p></div>`;
+    }
+    return adminGate();
+  }
   const found = state.people.filter((p) => p.status === "found").length;
   const missing = state.people.filter((p) => p.status === "missing").length;
-  const bandLine = state.profile.saved && state.profile.bandId
-    ? `<p class="this-band">${esc(t("thisBand"))} <span class="band-code">${esc(state.profile.bandId)}</span></p>
-       <button class="text-btn" type="button" data-action="write-nfc">${esc(t("writeNfc"))}</button>`
-    : `<p class="this-band">${esc(t("noBand"))}</p>`;
   return `
     <div class="view-registry">
       <p class="intro">${esc(t("regIntro"))}</p>
-      <div class="stats">
-        <div><b>${found}</b><span>${esc(t("checkedIn"))}</span></div>
-        <div><b>${missing}</b><span>${esc(t("notFound"))}</span></div>
+      <div class="map-wrap">
+        <div id="rescue-map" role="region" aria-label="${esc(t("tabRegistry"))}"></div>
+      </div>
+      <p class="legend"><span class="dot shelter"></span> ${esc(t("legendShelter"))} <span class="dot person"></span> ${esc(t("legendPerson"))}</p>
+      ${state.people.some((person) => personCoords(person)) ? "" : `<p class="sync">${esc(t("mapEmpty"))}</p>`}
+      <div class="folds">
+        ${foldHTML("found", state.showFound, "toggle-found", t("checkedIn"), found, foundListHTML())}
+        ${foldHTML("missing", state.showMissing, "toggle-missing", t("notFound"), missing, missingListHTML())}
       </div>
       <p class="sync">${esc(t(state.registryNoteKey))}</p>
-      <article class="card">
-        <h2>${esc(t("checkTitle"))}</h2>
-        ${bandLine}
-        <form data-form="checkin">
-          ${field("checkin.bandId", t("bandCode"), state.checkin.bandId, "text")}
-          ${field("checkin.shelter", t("shelter"), state.checkin.shelter, "text", SHELTERS)}
-          ${field("checkin.area", t("area"), state.checkin.area, "text", AREAS)}
-          <p class="nfc-status">${esc(state.checkin.nfcStatus)}</p>
-          <div class="actions">
-            <button class="pill-btn" type="button" data-action="tap">${esc(t("tap"))}</button>
-            <button class="pill-btn" type="submit">${esc(t("checkIn"))}</button>
-          </div>
-        </form>
-        <button class="text-btn" type="button" data-action="register-missing">${esc(t("registerMissing"))}</button>
-      </article>
       <article class="panel">
         <h2>${esc(t("searchTitle"))}</h2>
         <form data-form="search">
@@ -656,9 +1160,87 @@ function registryView() {
         </form>
       </article>
       ${resultsHTML()}
-      <button class="pill-btn" type="button" data-action="missing">${esc(state.showMissing ? t("hideMissing") : t("showMissing"))}</button>
-      ${state.showMissing ? missingHTML() : ""}
     </div>`;
+}
+
+function foldHTML(kind, open, action, label, count, body) {
+  return `
+    <section class="fold ${kind}">
+      <button class="fold-head" type="button" data-action="${action}" aria-expanded="${open}">
+        <span>${esc(label)}</span>
+        <b>${count}</b>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5H7z"/></svg>
+      </button>
+      ${open ? `<div class="fold-body">${body}</div>` : ""}
+    </section>`;
+}
+
+function profileFacts(person, nested) {
+  const sex = person.sex ? (t("sex_" + person.sex) || person.sex) : "—";
+  const row = (label, value) => `<li>${esc(label)}: ${esc(value || "—")}</li>`;
+  const place = [person.area, person.shelter].filter(Boolean).join(" · ");
+  const point = personCoords(person);
+  const where = [place, point ? `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}` : ""].filter(Boolean).join(" · ");
+  const body = `
+      ${nested ? "" : `<h3>${esc(person.name || t("unknownName"))}</h3>`}
+      <ul>
+        ${row(t("sex"), sex)}
+        ${row(t("age"), person.age)}
+        ${row(t("ethnicity"), person.ethnicity)}
+        ${row(t("eye"), person.eyeColor)}
+        ${row(t("height"), person.height)}
+        ${row(t("weight"), person.weight)}
+        ${row(t("blood"), person.bloodType)}
+        ${row(t("home"), person.homeAddress)}
+        ${row(t("contacts"), contactText(person.emergencyContacts))}
+      </ul>
+      ${where ? `<p class="traits">${esc(where)}</p>` : ""}`;
+  if (nested) return `<div class="profile-mini nested">${body}</div>`;
+  return `<article class="profile-mini">${body}</article>`;
+}
+
+function foundListHTML() {
+  const rows = state.people.filter((person) => person.status === "found");
+  if (!rows.length) return `<p class="empty">${esc(t("noFoundList"))}</p>`;
+  return rows.map(foundPersonHTML).join("");
+}
+
+function foundPersonHTML(person) {
+  const open = !!state.openProfiles[person.bandId];
+  return `
+    <article class="profile-fold">
+      <button class="profile-fold-head" type="button" data-action="toggle-person" data-band="${esc(person.bandId)}" aria-expanded="${open}">
+        <span>${esc(person.name || t("unknownName"))}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7 10l5 5 5-5H7z"/></svg>
+      </button>
+      ${open ? `<div class="profile-fold-body">${profileFacts(person, true)}</div>` : ""}
+    </article>`;
+}
+
+function missingListHTML() {
+  const draft = state.missingDraft;
+  const rows = state.people.filter((person) => person.status === "missing");
+  return `
+    ${state.missingError ? `<p class="form-error">${esc(state.missingError)}</p>` : ""}
+    ${field("missingDraft.name", t("name"), draft.name)}
+    <div class="pair">
+      ${selectField("missingDraft.sex", t("sex"), draft.sex, sexOptions())}
+      ${field("missingDraft.age", t("age"), draft.age, "text")}
+    </div>
+    ${field("missingDraft.ethnicity", t("ethnicity"), draft.ethnicity)}
+    <div class="pair">
+      ${field("missingDraft.eyeColor", t("eye"), draft.eyeColor)}
+      ${selectField("missingDraft.bloodType", t("blood"), draft.bloodType, bloodOptions())}
+    </div>
+    <div class="pair">
+      ${field("missingDraft.height", t("height"), draft.height)}
+      ${field("missingDraft.weight", t("weight"), draft.weight)}
+    </div>
+    ${field("missingDraft.homeAddress", t("home"), draft.homeAddress || "")}
+    ${contactBlock("missingDraft", draft.emergencyContacts)}
+    <button class="pill-btn" type="button" data-action="add-missing">${esc(t("addMissing"))}</button>
+    ${rows.length ? rows.map(profileFacts).join("") : `<p class="empty">${esc(t("noMissingList"))}</p>`}
+  `;
 }
 
 function labelSpan(text) { return `<span>${esc(text)}</span>`; }
@@ -696,8 +1278,9 @@ function personCard(person) {
   const bits = [sexText(person.sex), person.age, person.eyeColor, person.bloodType, person.ethnicity, person.height]
     .filter((bit) => bit && bit !== "—" && bit !== t("sample"));
   const found = person.status === "found";
+  const place = person.latitude != null ? locationLabel(person) : (person.shelter || "");
   const where = found
-    ? `${t("foundAt")}: ${person.shelter || "—"}${person.area ? " · " + person.area : ""}`
+    ? `${t("foundAt")}: ${place || "—"}${person.area ? " · " + person.area : ""}`
     : t("statusMissing");
   return `<article class="result">
     <p class="who">${esc(person.name)} <span class="badge ${found ? "found" : "missing"}">${esc(found ? t("statusFound") : t("statusMissing"))}</span></p>
@@ -713,16 +1296,42 @@ function resultsHTML() {
   return `<section class="results"><h3>${esc(t("results"))}</h3>${state.search.results.map(personCard).join("")}</section>`;
 }
 
-function missingHTML() {
-  const rows = state.people.filter((p) => p.status === "missing");
-  if (!rows.length) return `<p class="empty">${esc(t("emptyRegistry"))}</p>`;
-  return `<section class="results"><h3>${esc(t("missingList"))}</h3>${rows.map(personCard).join("")}</section>`;
-}
-
 function modalHTML() {
   if (state.modal === "settings") return settingsModal();
+  if (state.modal === "admin") return adminModal();
   if (state.modal === "edit") return editModal();
+  if (state.modal === "add") return addModal();
   return "";
+}
+
+function addModal() {
+  const pending = state.pendingAdd;
+  if (!pending) return "";
+  const bits = [sexText(pending.sex), pending.age, pending.bloodType].filter(Boolean);
+  let location = t("locWaiting");
+  if (pending.locationState === "ready") {
+    const bits = [t("locReady")];
+    if (pending.place) bits.push(pending.place);
+    if (pending.near) bits.push(`${t("near")} ${pending.near}`);
+    location = bits.join(". ");
+  }
+  if (pending.locationState === "denied") location = t("locDenied");
+  return `
+    <div class="backdrop" data-action="backdrop">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="add-title" tabindex="-1">
+        <div class="set-row">
+          <h2 id="add-title">${esc(t("addTitle"))}</h2>
+          <button class="close" type="button" data-action="close" aria-label="${esc(t("close"))}">×</button>
+        </div>
+        <p class="who-line">${esc(pending.name)}</p>
+        ${bits.length ? `<p class="who-line">${esc(bits.join(" · "))}</p>` : ""}
+        <p class="who-line">${esc(location)}</p>
+        <div class="actions">
+          <button class="primary" type="button" data-action="confirm-add" data-focus="confirm-add">${esc(t("addYes"))}</button>
+          <button class="ghost" type="button" data-action="close">${esc(t("addNo"))}</button>
+        </div>
+      </div>
+    </div>`;
 }
 
 function settingsModal() {
@@ -789,6 +1398,8 @@ function editModal() {
           ${field("edit.weight", t("weight"), edit.weight)}
         </div>
         ${selectField("edit.bloodType", t("blood"), edit.bloodType, bloodOptions())}
+        ${field("edit.homeAddress", t("home"), edit.homeAddress || "")}
+        ${contactBlock("edit", edit.emergencyContacts)}
         <div class="actions">
           <button class="primary" type="button" data-action="save-edit" data-focus="save-edit">${esc(t("save"))}</button>
           <button class="ghost" type="button" data-action="close">${esc(t("cancel"))}</button>
@@ -854,18 +1465,37 @@ function speakerIcon(muted) {
 }
 
 function setPath(path, value) {
-  const [group, key] = path.split(".");
-  if (group === "chatDraft") {
+  if (path === "chatDraft") {
     state.chatDraft = value;
     return;
   }
-  if (state[group] && key) state[group][key] = value;
+  if (path === "adminPassword") {
+    state.adminPassword = value;
+    return;
+  }
+  const parts = path.split(".");
+  if (parts.length === 4 && (parts[0] === "edit" || parts[0] === "missingDraft") && parts[1] === "emergencyContacts") {
+    const index = Number(parts[2]);
+    const key = parts[3];
+    const row = state[parts[0]] && state[parts[0]].emergencyContacts && state[parts[0]].emergencyContacts[index];
+    if (!row) return;
+    if (key === "name" || key === "relationship" || key === "phone") row[key] = value;
+    return;
+  }
+  const [group, key] = parts;
+  if (parts.length === 2 && state[group] && key) state[group][key] = value;
 }
 
 function onInput(event) {
   const el = event.target.closest("[data-field]");
   if (!el) return;
-  setPath(el.dataset.field, el.value);
+  const clean = repairText(el.value);
+  if (clean !== el.value) {
+    const at = el.selectionStart;
+    el.value = clean;
+    if (at != null) el.setSelectionRange(at, at);
+  }
+  setPath(el.dataset.field, clean);
   if (el.dataset.field === "checkin.shelter" || el.dataset.field === "checkin.area") persist();
 }
 
@@ -883,17 +1513,30 @@ function onClick(event) {
   else if (action === "edit") openEdit();
   else if (action === "save-edit") saveEdit();
   else if (action === "pick-photo") document.getElementById("photo-input")?.click();
-  else if (action === "expand") toggleChat();
+  else if (action === "expand") location.hash = "consultant";
   else if (action === "retry") retrySummary();
-  else if (action === "tap") tapBracelet();
-  else if (action === "write-nfc") writeBracelet();
-  else if (action === "register-missing") registerMissing();
+  else if (action === "share-profile") offerShare();
+  else if (action === "copy-link") copyBandLink();
+  else if (action === "confirm-add") confirmAdd();
   else if (action === "more") {
     state.search.showMore = !state.search.showMore;
     render();
-  } else if (action === "missing") {
+  }   else if (action === "missing" || action === "toggle-missing") {
     state.showMissing = !state.showMissing;
     render();
+  } else if (action === "toggle-found") {
+    state.showFound = !state.showFound;
+    render();
+  } else if (action === "toggle-person") {
+    const id = closer.dataset.band;
+    state.openProfiles[id] = !state.openProfiles[id];
+    render();
+  } else if (action === "add-missing") {
+    addMissingPerson();
+  } else if (action === "add-contact") {
+    addContact(closer.dataset.group);
+  } else if (action === "remove-contact") {
+    removeContact(closer.dataset.group, closer.dataset.index);
   }
 }
 
@@ -903,7 +1546,11 @@ function onSubmit(event) {
   event.preventDefault();
   if (form.dataset.form === "chat") sendChat();
   else if (form.dataset.form === "search") runSearch();
-  else if (form.dataset.form === "checkin") checkIn();
+  else if (form.dataset.form === "admin") {
+    const input = form.querySelector("[data-field='adminPassword']");
+    if (input) state.adminPassword = input.value;
+    unlockAdmin();
+  }
 }
 
 function onChange(event) {
@@ -919,10 +1566,23 @@ function openSettings() {
   render();
 }
 
+function profileIsShared() {
+  const id = state.profile.bandId;
+  if (!id) return false;
+  return state.people.some((person) => person.bandId === id);
+}
+
 function closeModal() {
-  const back = state.modal === "settings" ? "open-settings" : "open-edit";
+  const which = state.modal;
+  const back = which === "settings" ? "open-settings" : which === "add" ? "share" : which === "admin" && state.adminPurpose === "share" ? "share" : "open-edit";
+  if (which === "admin") {
+    state.adminPurpose = "";
+    state.adminPassword = "";
+    state.adminError = "";
+  }
   state.modal = null;
   state.edit = null;
+  state.pendingAdd = null;
   state.returnFocus = back;
   render();
 }
@@ -990,12 +1650,96 @@ function speak(text) {
   window.speechSynthesis.speak(utter);
 }
 
+function askForAdmin(purpose) {
+  state.adminPurpose = purpose;
+  state.adminError = "";
+  state.adminPassword = "";
+  state.modal = "admin";
+  state.focusModal = true;
+  render();
+}
+
 function openEdit() {
-  state.edit = { ...state.profile };
+  if (!adminToken()) {
+    askForAdmin("edit");
+    return;
+  }
+  state.edit = {
+    ...state.profile,
+    homeAddress: String(state.profile.homeAddress || ""),
+    emergencyContacts: contactsFrom(state.profile.emergencyContacts).map((item) => ({ ...item })),
+  };
   state.editError = "";
   state.modal = "edit";
   state.focusModal = true;
   render();
+}
+
+function addContact(group) {
+  const target = state[group];
+  if (!target) return;
+  if (!Array.isArray(target.emergencyContacts)) target.emergencyContacts = [];
+  if (target.emergencyContacts.length >= 3) return;
+  target.emergencyContacts.push({ name: "", relationship: "", phone: "" });
+  render();
+}
+
+function removeContact(group, index) {
+  const target = state[group];
+  if (!target || !Array.isArray(target.emergencyContacts)) return;
+  target.emergencyContacts.splice(Number(index), 1);
+  render();
+}
+
+async function unlockAdmin() {
+  if (state.adminBusy) return;
+  const purpose = state.adminPurpose || "registry";
+  const password = state.adminPassword;
+  state.adminBusy = true;
+  state.adminPassword = "";
+  state.adminError = "";
+  try {
+    const res = await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) {
+      state.adminError = t("adminFail");
+      render();
+      return;
+    }
+    const data = await res.json();
+    if (!data || typeof data.token !== "string" || !data.token) {
+      state.adminError = t("adminFail");
+      render();
+      return;
+    }
+    sessionStorage.setItem(ADMIN_KEY, data.token);
+    state.adminPurpose = "";
+    if (state.modal === "admin") state.modal = null;
+    try {
+      await loadPeople();
+    } catch (error) {
+      if (error.message === "auth") {
+        state.adminError = t("adminFail");
+        render();
+        return;
+      }
+      state.registryNoteKey = "registryMiss";
+      state.adminError = t("registryMiss");
+      render();
+      return;
+    }
+    if (purpose === "edit") openEdit();
+    else if (purpose === "share") offerShare();
+    else render();
+  } catch {
+    state.adminError = t("adminFail");
+    render();
+  } finally {
+    state.adminBusy = false;
+  }
 }
 
 function saveEdit() {
@@ -1005,10 +1749,12 @@ function saveEdit() {
     render();
     return;
   }
-  const bandId = state.profile.bandId || uniqueBandId();
+  const bandId = bandRoute() || state.profile.bandId || uniqueBandId();
   state.profile = {
     ...edit,
     name: edit.name.trim(),
+    homeAddress: String(edit.homeAddress || "").trim().slice(0, 160),
+    emergencyContacts: filledContacts(edit.emergencyContacts),
     saved: true,
     bandId,
     updatedAt: new Date().toISOString(),
@@ -1016,7 +1762,6 @@ function saveEdit() {
   state.modal = null;
   state.edit = null;
   state.returnFocus = "open-edit";
-  if (!state.checkin.bandId) state.checkin.bandId = bandId;
   persist();
   announce(t("savedProfile"));
   if (state.settings.tts) speak(`${state.profile.name}. ${t("savedProfile")}`);
@@ -1028,18 +1773,25 @@ function uniqueBandId() {
   const taken = new Set(state.people.map((p) => p.bandId));
   do {
     id = `AB-${Math.floor(1000 + Math.random() * 9000)}`;
-  } while (taken.has(id));
+  } while (taken.has(id) || RESERVED_BANDS.includes(id));
   return id;
 }
 
 async function setPhoto(file) {
   if (!file || !state.edit) return;
-  if (!/^image\/(png|jpeg)$/.test(file.type)) {
+  const named = /\.(png|jpe?g|heic|webp)$/i.test(file.name || "");
+  if (!/^image\//.test(file.type || "") && !named) {
     state.editError = t("fileType");
     render();
     return;
   }
-  state.edit.photo = await shrinkImage(file);
+  const photo = await shrinkImage(file);
+  if (!photo) {
+    state.editError = t("fileType");
+    render();
+    return;
+  }
+  state.edit.photo = photo;
   state.editError = "";
   render();
 }
@@ -1049,22 +1801,35 @@ function shrinkImage(file) {
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
-      const scale = Math.min(1, 800 / Math.max(img.width, img.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round(img.width * scale));
-      canvas.height = Math.max(1, Math.round(img.height * scale));
-      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL("image/jpeg", 0.82));
+      let edge = 320;
+      let quality = 0.68;
+      let data = encodePhoto(img, edge, quality);
+      while (data.length > 90000 && edge > 96) {
+        edge = Math.round(edge * 0.75);
+        quality = Math.max(0.46, quality - 0.08);
+        data = encodePhoto(img, edge, quality);
+      }
+      resolve(data.startsWith("data:image/jpeg") ? data : "");
     };
-    img.onerror = () => resolve("");
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve("");
+    };
     img.src = url;
   });
 }
 
-function toggleChat() {
-  state.chatExpanded = !state.chatExpanded;
-  render();
+function encodePhoto(img, edge, quality) {
+  const scale = Math.min(1, edge / Math.max(img.width, img.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(img.width * scale));
+  canvas.height = Math.max(1, Math.round(img.height * scale));
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/jpeg", quality);
 }
 
 function loadScript(src) {
@@ -1227,18 +1992,28 @@ function languageRule() {
 }
 
 function insightSystem() {
-  return `You help rescue workers read an emergency bracelet record during a disaster.
+  return `You turn an uploaded medical record into a short summary for a rescue bracelet.
 Return JSON only, with this shape:
 {"pastMedicalHistory": string[], "medications": string[], "allergies": string[], "briefing": string}
-Rules:
-- Use only facts explicitly written in the document for the three arrays.
-- Do not diagnose, infer a new condition, interpret test results, or recommend treatment or doses.
-- Keep each array item a short phrase. Use an empty array when a section is absent. Maximum 6 items.
-- briefing is at most 60 words, for a rescuer, and must not repeat those three lists.
-- Do not diagnose or prescribe in the briefing. Say "records mention" when you refer to stated history.
-- Give concrete checks: what to confirm if the person is responsive, what to flag before any medicine, and what to look for.
-- If the record is thin, say what is missing and that you cannot diagnose.
-- briefing is plain sentences, with no headings.
+
+Match this style. The example shows the shape, not words to copy unless the document is that case:
+pastMedicalHistory:
+- "Chronic obstructive pulmonary disease (COPD)"
+- "Recent visit: Acute exacerbation on 18/11/2026"
+- "Previous acute exacerbation episodes"
+medications:
+- "Inhaled Salbutamol through nebuliser - open tight airways"
+- "Amoxicillin-Clavulanate for a standard course of 5-7 days"
+- "Aminopenicillins prescribed for past acute exacerbation episodes"
+allergies:
+- "No Known Drug Allergies (NKDA)."
+
+How to build the lists from the document you are given:
+- pastMedicalHistory: the diagnosis the record names, then the current visit as "Recent visit: <problem> on <date>" when a date is written, then a separate line for earlier episodes when the record mentions them, such as "Previous acute exacerbation episodes". Keep that history line even if a medicine line also mentions those episodes. Keep the condition name and abbreviation as written. Do not make separate lines for occupation, smoking, vitals, lab numbers, or examination findings.
+- medications: each medicine prescribed in this visit, then medicines named for past episodes. When the record says what a medicine is for, add that purpose after a dash in a few plain words. Include a duration only when the record states one. Do not invent a drug, dose, or purpose.
+- allergies: the allergy statement as written. If the record says there are no known drug allergies, write "No Known Drug Allergies (NKDA)." Use an empty array only when allergies are not mentioned.
+- One line per item, with no numbers inside the string. Maximum 6 items in each array.
+- briefing: two or three natural sentences a rescue worker can read quickly. Explain the illness or injury and what the medicines are for, and add practical advice. Do not use markdown, asterisks, or hash headings. Do not invent numbers or thresholds that are not written. Do not say that you cannot diagnose or prescribe.
 - ${languageRule()}`;
 }
 
@@ -1275,17 +2050,15 @@ function profileLines() {
 
 function chatSystem() {
   const summary = state.record.mode === "live" ? JSON.stringify(state.record.summary) : "No medical record has been uploaded.";
-  return `You are the AID-BAND assistant for rescue workers in a disaster response. You are not a doctor.
-You must never:
-- give a diagnosis or tell the rescuer what disease the person has
-- prescribe medicine, doses, or treatment
-- invent allergies, medicines, history, or measurements that are not provided
-You may:
-- turn recorded history, medicines, and allergies into questions and precautions
-- tell the rescuer to confirm details with a responsive person
-- say when something should be handed to the on-site medical team
-If asked for a diagnosis, refuse in one sentence and offer a safe check instead.
-Keep the answer under 120 words.
+  return `You are the AID-BAND assistant. Explain illnesses, injuries, and medicines in plain language, and give practical advice when asked.
+When the question is about this person, use the bracelet profile and the record summary.
+Do not invent allergies, medicines, doses, or measurements that are not in the record.
+Do not add a disclaimer that you cannot diagnose.
+Talk naturally to a rescue worker. Use complete, flowing sentences, not clipped notes.
+A reply can be a few paragraphs. Use a bullet list only when you are listing several separate steps, and make each bullet a full sentence starting with "- ".
+Leave a blank line between paragraphs.
+Do not use bold, italics, asterisks, or hash headings.
+Write contractions with a normal apostrophe.
 ${languageRule()}
 Bracelet profile:
 ${profileLines()}
@@ -1335,7 +2108,6 @@ async function sendChat() {
   if (!text || state.chatBusy) return;
   state.chat.push({ role: "user", content: text });
   state.chatDraft = "";
-  state.chatExpanded = true;
   state.chatBusy = true;
   persist();
   render();
@@ -1344,7 +2116,7 @@ async function sendChat() {
       { role: "system", content: chatSystem() },
       ...state.chat.slice(-8).map((message) => ({ role: message.role, content: message.content })),
     ]);
-    state.chat.push({ role: "assistant", content: reply });
+    state.chat.push({ role: "assistant", content: shapeReply(reply) });
     if (state.settings.tts) speak(reply);
   } catch (error) {
     state.chat.push({ role: "assistant", content: error.message === "rate" ? t("aiBusy") : t("aiFail") });
@@ -1386,7 +2158,6 @@ function runSearch() {
     state.search.results = [];
     state.search.ran = true;
     announce(t("noQuery"));
-    state.checkin.nfcStatus = t("noQuery");
     render();
     return;
   }
@@ -1398,208 +2169,395 @@ function runSearch() {
 
 function traitsFrom(source) {
   return {
-    bandId: String(source.bandId || "").toUpperCase(),
+    bandId: String(source.bandId || source.id || "").toUpperCase(),
     name: source.name || "",
     sex: source.sex || "",
     age: source.age || "",
     ethnicity: source.ethnicity || "",
-    eyeColor: source.eyeColor || "",
+    eyeColor: source.eyeColor || source.eye || "",
     height: source.height || "",
     weight: source.weight || "",
-    bloodType: source.bloodType || "",
+    bloodType: source.bloodType || source.blood || "",
+    homeAddress: String(source.homeAddress || "").trim().slice(0, 160),
+    emergencyContacts: filledContacts(source.emergencyContacts),
+    history: listField(source.history),
+    medications: listField(source.medications || source.meds),
+    allergies: listField(source.allergies),
   };
 }
 
-function localProfilePayload() {
-  return traitsFrom(state.profile);
-}
-
-async function savePerson(person) {
-  const next = { ...person, updatedAt: new Date().toISOString() };
-  if (state.shared) {
-    const res = await fetch("/api/people", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(next),
-    });
-    if (!res.ok) throw new Error("save");
-    const data = await res.json();
-    const saved = data.person || next;
-    const index = state.people.findIndex((item) => item.bandId === saved.bandId);
-    if (index >= 0) state.people[index] = saved;
-    else state.people.unshift(saved);
-  } else {
-    const index = state.people.findIndex((item) => item.bandId === next.bandId);
-    if (index >= 0) state.people[index] = next;
-    else state.people.unshift(next);
-  }
-  persist();
-}
-
-function knownPerson(code, payload) {
-  const local = state.profile.saved && state.profile.bandId.toUpperCase() === code
-    ? localProfilePayload()
-    : null;
-  const existing = state.people.find((item) => item.bandId === code);
-  const base = { ...(existing || {}), ...(payload || {}), ...(local || {}) };
-  base.bandId = code;
-  if (!base.name) base.name = local?.name || existing?.name || t("unknownName");
-  return base;
-}
-
-async function checkIn() {
-  const code = state.checkin.bandId.trim().toUpperCase();
-  state.checkin.bandId = code;
-  if (!/^[A-Za-z0-9-]{3,24}$/.test(code)) {
-    state.checkin.nfcStatus = t("nfcErr");
-    announce(state.checkin.nfcStatus);
-    render();
-    return;
-  }
-  if (!state.checkin.shelter.trim()) {
-    state.checkin.nfcStatus = t("needShelter");
-    announce(state.checkin.nfcStatus);
-    render();
-    return;
-  }
-  const person = knownPerson(code, state.pendingNfc);
-  person.status = "found";
-  person.shelter = state.checkin.shelter.trim();
-  person.area = state.checkin.area.trim();
-  try {
-    await savePerson(person);
-    state.pendingNfc = null;
-    state.checkin.nfcStatus = t("checkedMsg");
-    announce(`${person.name}. ${t("checkedMsg")} ${person.shelter}`);
-    if (state.settings.tts) speak(`${person.name}. ${t("foundAt")}: ${person.shelter}`);
-  } catch {
-    state.checkin.nfcStatus = t("registryMiss");
-  }
-  render();
-}
-
-async function registerMissing() {
-  if (!state.profile.saved || !state.profile.bandId) {
-    state.checkin.nfcStatus = t("needProfile");
-    announce(state.checkin.nfcStatus);
-    render();
-    return;
-  }
-  const existing = state.people.find((item) => item.bandId === state.profile.bandId);
-  if (existing && existing.status === "found") {
-    state.checkin.nfcStatus = `${t("alreadyFound")} ${existing.shelter || ""}`.trim();
-    announce(state.checkin.nfcStatus);
-    render();
-    return;
-  }
-  const person = localProfilePayload();
-  person.status = "missing";
-  person.shelter = "";
-  person.area = state.checkin.area.trim();
-  try {
-    await savePerson(person);
-    state.checkin.bandId = person.bandId;
-    state.checkin.nfcStatus = t("registered");
-    announce(t("registered"));
-  } catch {
-    state.checkin.nfcStatus = t("registryMiss");
-  }
-  render();
-}
-
-function decodeRecord(record) {
-  if (record.recordType !== "text") return "";
-  const encoding = record.encoding || "utf-8";
-  return new TextDecoder(encoding).decode(record.data).trim();
-}
-
-function payloadFromText(text) {
-  if (text.startsWith("{")) {
+function listField(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean).slice(0, 6);
+  if (typeof value === "string" && value.trim()) {
     try {
-      const data = JSON.parse(text);
-      return { code: String(data.id || data.bandId || "").toUpperCase(), payload: data };
-    } catch {
-      return { code: "", payload: null };
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) return listField(parsed);
+    } catch { /* plain text */ }
+    return [value.trim()];
+  }
+  return [];
+}
+
+function personCoords(person) {
+  if (!person || person.latitude == null || person.longitude == null || person.latitude === "" || person.longitude === "") return null;
+  const lat = Number(person.latitude);
+  const lng = Number(person.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+  return { lat, lng, person };
+}
+
+function distanceKm(a, b) {
+  const toRad = (deg) => deg * Math.PI / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const s = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(s)));
+}
+
+function localShelters(points) {
+  const found = [];
+  points.forEach((point) => {
+    SHELTER_PINS.forEach((shelter) => {
+      if (distanceKm(point, shelter) <= 25) found.push(shelter);
+    });
+  });
+  return found;
+}
+
+function nearestShelter(lat, lng, extra = []) {
+  const here = { lat, lng };
+  let best = null;
+  let bestKm = Infinity;
+  localShelters([here]).concat(extra).forEach((shelter) => {
+    const km = distanceKm(here, shelter);
+    if (km < bestKm) {
+      best = shelter;
+      bestKm = km;
     }
-  }
-  return { code: text.toUpperCase(), payload: null };
+  });
+  return bestKm <= 3 ? best : null;
 }
 
-async function tapBracelet() {
-  if (!("NDEFReader" in window)) {
-    state.checkin.nfcStatus = t("nfcUnsupported");
-    announce(state.checkin.nfcStatus);
-    render();
-    return;
-  }
-  try {
-    const reader = new window.NDEFReader();
-    await reader.scan();
-    state.checkin.nfcStatus = t("nfcWaiting");
-    render();
-    reader.onreading = (event) => {
-      let text = "";
-      for (const record of event.message.records) {
-        const decoded = decodeRecord(record);
-        if (decoded) text = decoded;
-      }
-      const { code, payload } = payloadFromText(text);
-      if (!code) {
-        state.checkin.nfcStatus = t("nfcErr");
-      } else {
-        state.checkin.bandId = code;
-        state.pendingNfc = payload ? {
-          bandId: code,
-          name: payload.name || "",
-          sex: payload.sex || "",
-          age: payload.age || "",
-          ethnicity: payload.ethnicity || "",
-          eyeColor: payload.eye || payload.eyeColor || "",
-          height: payload.height || "",
-          weight: payload.weight || "",
-          bloodType: payload.blood || payload.bloodType || "",
-        } : null;
-        state.checkin.nfcStatus = t("nfcDone");
-        announce(t("nfcDone"));
-      }
-      render();
-    };
-  } catch {
-    state.checkin.nfcStatus = t("nfcErr");
-    announce(state.checkin.nfcStatus);
-    render();
-  }
+function locationLabel(person) {
+  if (person.shelter) return person.shelter;
+  if (person.area) return person.area;
+  const point = personCoords(person);
+  if (!point) return "";
+  return `${point.lat.toFixed(4)}, ${point.lng.toFixed(4)}`;
 }
 
-function braceletPayload() {
-  const p = state.profile;
-  return JSON.stringify({
-    id: p.bandId, name: p.name, sex: p.sex, age: p.age, ethnicity: p.ethnicity,
-    eye: p.eyeColor, height: p.height, weight: p.weight, blood: p.bloodType,
+const placeCache = new Map();
+
+function placeInfo(lat, lng) {
+  const key = `${Number(lat).toFixed(2)},${Number(lng).toFixed(2)}`;
+  if (!placeCache.has(key)) {
+    placeCache.set(key, fetch(`/api/place?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`)
+      .then(async (res) => (res.ok ? res.json() : { place: "", shelters: [] }))
+      .catch(() => ({ place: "", shelters: [] })));
+  }
+  return placeCache.get(key);
+}
+
+function uniquePoints(points) {
+  const seen = new Set();
+  return points.filter((point) => {
+    const key = `${point.lat.toFixed(2)},${point.lng.toFixed(2)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
 }
 
-async function writeBracelet() {
-  if (!state.profile.saved || !state.profile.bandId) {
-    state.checkin.nfcStatus = t("needProfile");
+function drawShelterMarkers(layer, shelters) {
+  layer.clearLayers();
+  const drawn = new Set();
+  shelters.forEach((shelter) => {
+    const key = `${Number(shelter.lat).toFixed(4)},${Number(shelter.lng).toFixed(4)}`;
+    if (drawn.has(key) || !Number.isFinite(Number(shelter.lat)) || !Number.isFinite(Number(shelter.lng))) return;
+    drawn.add(key);
+    window.L.circleMarker([shelter.lat, shelter.lng], {
+      radius: 8,
+      color: "#1d4fbf",
+      fillColor: "#2f6bff",
+      fillOpacity: 0.95,
+      weight: 2,
+    }).bindPopup(`<strong>${esc(shelter.name)}</strong><br>${esc(t("legendShelter"))}`).addTo(layer);
+  });
+}
+
+function frameMap(map, points) {
+  if (points.length === 1) map.setView([points[0].lat, points[0].lng], 14);
+  else if (points.length > 1) map.fitBounds(points.map((point) => [point.lat, point.lng]), { padding: [28, 28], maxZoom: 14 });
+  else map.setView([20, 0], 2);
+}
+
+function mountMap() {
+  const el = document.getElementById("rescue-map");
+  if (!el || !window.L) return;
+  const points = state.people.map(personCoords).filter(Boolean);
+  const map = window.L.map(el, { zoomControl: true, minZoom: 2, maxZoom: 18 });
+  frameMap(map, points);
+  window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "&copy; OpenStreetMap",
+  }).addTo(map);
+  const shelterLayer = window.L.layerGroup().addTo(map);
+  drawShelterMarkers(shelterLayer, localShelters(points));
+  points.forEach((point) => {
+    const person = point.person;
+    const icon = window.L.divIcon({
+      className: "person-pin",
+      html: `<span class="person-pin-dot">${personPinSVG()}</span>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 26],
+      popupAnchor: [0, -22],
+    });
+    window.L.marker([point.lat, point.lng], { icon, title: person.name }).bindPopup(
+      `<strong>${esc(person.name)}</strong><br>${esc(locationLabel(person))}`
+    ).addTo(map);
+  });
+  mapHandle = map;
+  setTimeout(() => map.invalidateSize(), 150);
+  loadNearbyShelters(map, shelterLayer, uniquePoints(points));
+}
+
+async function loadNearbyShelters(map, layer, points) {
+  const shelters = localShelters(points);
+  for (const point of points.slice(0, 6)) {
+    if (mapHandle !== map) return;
+    const info = await placeInfo(point.lat, point.lng);
+    (info.shelters || []).forEach((shelter) => shelters.push(shelter));
+    if (mapHandle !== map) return;
+    drawShelterMarkers(layer, shelters);
+  }
+}
+
+function personPinSVG() {
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.2" fill="#fff"/><path fill="#fff" d="M6.2 20c.4-4 2.6-6 5.8-6s5.4 2 5.8 6H6.2z"/></svg>`;
+}
+
+async function addMissingPerson() {
+  if (!adminToken()) {
+    state.adminOk = false;
+    state.adminError = t("adminFail");
     render();
     return;
   }
-  if (!("NDEFReader" in window)) {
-    state.checkin.nfcStatus = t("nfcUnsupported");
-    announce(state.checkin.nfcStatus);
+  const draft = state.missingDraft;
+  if (!draft.name.trim()) {
+    state.missingError = t("nameRequired");
+    state.showMissing = true;
     render();
     return;
   }
+  const person = {
+    bandId: uniqueBandId(),
+    name: draft.name.trim(),
+    sex: draft.sex,
+    age: draft.age.trim(),
+    ethnicity: draft.ethnicity.trim(),
+    eyeColor: draft.eyeColor.trim(),
+    height: draft.height.trim(),
+    weight: draft.weight.trim(),
+    bloodType: draft.bloodType,
+    homeAddress: String(draft.homeAddress || "").trim().slice(0, 160),
+    emergencyContacts: filledContacts(draft.emergencyContacts),
+    status: "missing",
+    shelter: "",
+    area: "",
+    latitude: null,
+    longitude: null,
+    history: [],
+    medications: [],
+    allergies: [],
+  };
   try {
-    const writer = new window.NDEFReader();
-    await writer.write({ records: [{ recordType: "text", data: braceletPayload() }] });
-    state.checkin.nfcStatus = t("nfcWritten");
-    announce(t("nfcWritten"));
-  } catch {
-    state.checkin.nfcStatus = t("nfcErr");
+    await savePerson(person);
+    state.missingDraft = emptyMissingDraft();
+    state.missingError = "";
+    state.showMissing = true;
+    announce(`${person.name}. ${t("notFound")}`);
+  } catch (error) {
+    if (error.message === "auth") {
+      state.adminOk = false;
+      state.adminError = t("adminFail");
+    } else {
+      state.missingError = t("registryMiss");
+    }
   }
   render();
+}
+
+async function savePerson(person) {
+  const token = adminToken();
+  if (!token) throw new Error("auth");
+  const next = {
+    ...person,
+    homeAddress: String(person.homeAddress || "").trim().slice(0, 160),
+    emergencyContacts: filledContacts(person.emergencyContacts),
+    updatedAt: new Date().toISOString(),
+  };
+  const res = await fetch("/api/people", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(next),
+  });
+  if (res.status === 401) {
+    clearAdminToken();
+    throw new Error("auth");
+  }
+  if (!res.ok) throw new Error("save");
+  const data = await res.json();
+  const saved = data.person || next;
+  saved.homeAddress = String(saved.homeAddress || "");
+  saved.emergencyContacts = contactsFrom(saved.emergencyContacts);
+  const listed = { ...saved };
+  delete listed.photo;
+  const index = state.people.findIndex((item) => item.bandId === listed.bandId);
+  if (index >= 0) state.people[index] = listed;
+  else state.people.unshift(listed);
+  state.shared = true;
+  state.adminOk = true;
+  persist();
+}
+
+function askLocation(pending) {
+  if (!navigator.geolocation) {
+    pending.locationState = "denied";
+    render();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition((position) => {
+    if (state.pendingAdd !== pending) return;
+    pending.latitude = position.coords.latitude;
+    pending.longitude = position.coords.longitude;
+    pending.locationState = "ready";
+    const near = nearestShelter(pending.latitude, pending.longitude);
+    pending.near = near ? near.name : "";
+    render();
+    describeLocation(pending);
+  }, () => {
+    if (state.pendingAdd !== pending) return;
+    pending.locationState = "denied";
+    render();
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 5000 });
+}
+
+function offerShare() {
+  if (!adminToken()) {
+    askForAdmin("share");
+    return;
+  }
+  if (!state.profile.saved || !state.profile.name || !state.profile.bandId) {
+    state.bandNote = t("needProfile");
+    render();
+    return;
+  }
+  const summary = state.record.mode === "live" ? state.record.summary : {};
+  const pending = {
+    ...traitsFrom({
+      ...state.profile,
+      history: summary.pastMedicalHistory,
+      medications: summary.medications,
+      allergies: summary.allergies,
+    }),
+    latitude: null,
+    longitude: null,
+    locationState: "waiting",
+    near: "",
+    source: "profile",
+    photo: state.profile.photo || "",
+  };
+  state.pendingAdd = pending;
+  state.modal = "add";
+  state.focusModal = true;
+  state.bandNote = "";
+  render();
+  askLocation(pending);
+}
+
+async function describeLocation(pending) {
+  if (pending.latitude == null || pending.longitude == null) return;
+  const info = await placeInfo(pending.latitude, pending.longitude);
+  if (state.pendingAdd !== pending) return;
+  pending.place = info.place || "";
+  const near = nearestShelter(pending.latitude, pending.longitude, info.shelters || []);
+  pending.near = near ? near.name : "";
+  render();
+}
+
+async function confirmAdd() {
+  const pending = state.pendingAdd;
+  if (!pending || !pending.name) return;
+  if (pending.latitude != null && pending.longitude != null && !pending.place) {
+    const info = await placeInfo(pending.latitude, pending.longitude);
+    pending.place = info.place || "";
+    if (!pending.near) {
+      const near = nearestShelter(pending.latitude, pending.longitude, info.shelters || []);
+      pending.near = near ? near.name : "";
+    }
+  }
+  const person = {
+    ...traitsFrom(pending),
+    status: "found",
+    shelter: pending.near || "",
+    area: pending.place || "",
+    photo: pending.photo || state.profile.photo || "",
+    latitude: pending.latitude ?? null,
+    longitude: pending.longitude ?? null,
+  };
+  if (!person.bandId) person.bandId = uniqueBandId();
+  try {
+    await savePerson(person);
+    state.bandNote = state.shared ? `${person.name}. ${t("added")}` : t("deviceOnly");
+    announce(state.bandNote);
+    if (state.settings.tts) speak(state.bandNote);
+  } catch (error) {
+    if (error.message === "auth") {
+      state.adminOk = false;
+      state.bandNote = t("adminFail");
+    } else {
+      state.bandNote = t("registryMiss");
+    }
+    announce(state.bandNote);
+  }
+  state.modal = null;
+  state.pendingAdd = null;
+  state.returnFocus = "share";
+  render();
+}
+
+async function loadPeople() {
+  const token = adminToken();
+  if (!token) {
+    state.adminOk = false;
+    throw new Error("auth");
+  }
+  const list = await fetch("/api/people", {
+    cache: "no-store",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (list.status === 401) {
+    clearAdminToken();
+    throw new Error("auth");
+  }
+  if (!list.ok) throw new Error("list");
+  const body = await list.json();
+  const people = Array.isArray(body.people) ? body.people : [];
+  people.forEach((person) => {
+    person.homeAddress = String(person.homeAddress || "");
+    person.emergencyContacts = contactsFrom(person.emergencyContacts);
+  });
+  state.people = people;
+  state.adminOk = true;
+  state.adminError = "";
+  state.registryNoteKey = "sharedOk";
+  state.shared = true;
 }
 
 async function detectBackend() {
@@ -1608,33 +2566,23 @@ async function detectBackend() {
     if (!res.ok) throw new Error("health");
     const data = await res.json();
     state.shared = Boolean(data.shared);
-    if (state.shared) {
-      const local = [...state.people];
-      for (const person of local) {
-        try {
-          await fetch("/api/people", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(person),
-          });
-        } catch {
-          /* keep going */
-        }
+    if (adminToken()) {
+      try {
+        await loadPeople();
+      } catch (error) {
+        state.adminOk = false;
+        if (error.message !== "auth") state.adminError = t("registryMiss");
       }
-      const list = await fetch("/api/people", { cache: "no-store" });
-      if (!list.ok) throw new Error("list");
-      const body = await list.json();
-      state.people = body.people || [];
-      state.registryNoteKey = "sharedOk";
-    } else {
+    } else if (!state.shared) {
       state.registryNoteKey = "deviceOnly";
     }
   } catch {
     state.shared = false;
-    state.registryNoteKey = state.triedBackend ? "registryMiss" : "deviceOnly";
-    if (state.triedBackend) state.registryNoteKey = "registryMiss";
-    else state.registryNoteKey = "deviceOnly";
+    state.adminOk = false;
+    if (adminToken()) state.adminError = t("registryMiss");
+    else state.registryNoteKey = "registryMiss";
   }
+  state.adminChecking = false;
   state.triedBackend = true;
   persist();
   render();
@@ -1666,7 +2614,27 @@ document.addEventListener("drop", (event) => {
 });
 window.addEventListener("hashchange", () => render());
 
+function copyBandLink() {
+  const url = bandUrl(state.profile.bandId || "");
+  if (!state.profile.bandId) return;
+  const done = () => {
+    state.bandNote = t("copied");
+    announce(state.bandNote);
+    render();
+  };
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(url).then(done).catch(() => {
+      state.bandNote = url;
+      render();
+    });
+    return;
+  }
+  state.bandNote = url;
+  render();
+}
+
 load();
 if (state.profile.bandId) state.checkin.bandId = state.profile.bandId;
 render();
 detectBackend();
+if (bandRoute()) loadBandPage(bandRoute());

@@ -1,7 +1,7 @@
 :root {
   --navy: #2c2d44;
   --bg: #d9dee6;
-  --accent: #d90429;
+  --accent: #f55654;
   --btn: #8d98ae;
   --ink: #ffffff;
   --soft: #e6e8ee;
@@ -83,10 +83,11 @@ button { cursor: pointer; }
 
 .brand h1 {
   margin: 0;
-  font-size: clamp(1.25rem, calc(1.55rem * var(--scale)), 2rem);
+  font-family: "Unbounded", "Noto Sans TC", "Noto Sans Devanagari", sans-serif;
+  font-size: clamp(1.15rem, calc(1.35rem * var(--scale)), 1.7rem);
   font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
 }
 
 .tagline {
@@ -206,6 +207,82 @@ html[data-size="lg"] .tagline {
 }
 
 .view-registry { padding-bottom: 28px; }
+
+.map-wrap {
+  position: relative;
+  height: 340px;
+  border: 4px solid #fff;
+  border-radius: 26px;
+  overflow: hidden;
+  background: #c5ccd4;
+}
+
+#rescue-map { height: 100%; width: 100%; background: #d9dee6; }
+
+.scan-btn { width: 100%; }
+
+.legend {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  font-size: calc(0.75rem * var(--scale));
+  font-weight: 800;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--navy);
+}
+
+.dot.shelter { background: #2f6bff; }
+.dot.person { background: #1f8a3a; }
+
+.person-pin { background: transparent; border: 0; }
+.person-pin-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1f8a3a;
+  display: grid;
+  place-items: center;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(44, 45, 68, 0.35);
+}
+.person-pin-dot svg { width: 16px; height: 16px; }
+
+.share-btn { width: 100%; margin-top: 10px; }
+
+.band-link {
+  display: block;
+  margin: 6px 0 0;
+  color: #fff;
+  font-size: calc(0.72rem * var(--scale));
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+a.pill-btn {
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+}
+
+.account-note, .who-line {
+  margin: 8px 0 0;
+  font-size: calc(0.78rem * var(--scale));
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.leaflet-popup-content { font-family: "Montserrat", "Noto Sans TC", "Noto Sans Devanagari", sans-serif; color: var(--navy); }
 
 .card {
   background: var(--navy);
@@ -507,10 +584,11 @@ html[data-size="md"] .summary { min-height: 250px; }
   margin: 0 0 14px;
   padding: 0 46px;
   text-align: center;
-  font-size: calc(1.55rem * var(--scale));
+  font-family: "Unbounded", "Noto Sans TC", "Noto Sans Devanagari", sans-serif;
+  font-size: calc(1.28rem * var(--scale));
   font-weight: 800;
-  letter-spacing: 0.04em;
-  line-height: 1.1;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
   overflow-wrap: anywhere;
 }
 
@@ -528,6 +606,7 @@ html[data-size="md"] .summary { min-height: 250px; }
   color: var(--navy);
   display: grid;
   place-items: center;
+  text-decoration: none;
 }
 
 .expand svg {
@@ -564,7 +643,7 @@ html[data-size="md"] .summary { min-height: 250px; }
   color: var(--accent);
 }
 
-.bubble-logo svg { width: 74%; height: 74%; }
+.bubble-logo svg { width: 100%; height: 100%; }
 
 .speech {
   position: relative;
@@ -579,6 +658,12 @@ html[data-size="md"] .summary { min-height: 250px; }
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
+
+.speech p { margin: 0 0 8px; }
+.speech p:last-child { margin: 0; }
+.speech ul, .speech ol { margin: 6px 0 8px; padding-left: 1.2em; }
+.speech li { margin: 0 0 4px; }
+.speech strong { font-weight: 800; }
 
 .msg.assistant .speech::before {
   content: "";
@@ -602,10 +687,34 @@ html[data-size="md"] .summary { min-height: 250px; }
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: min(52vh, 24rem);
-  overflow: auto;
   margin-top: 10px;
   padding-right: 2px;
+}
+
+.view-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: calc(100vh - 148px);
+  padding: 8px 14px calc(22px + env(safe-area-inset-bottom));
+}
+
+.view-chat h2 {
+  margin: 0;
+  font-family: "Unbounded", "Noto Sans TC", "Noto Sans Devanagari", sans-serif;
+  font-size: calc(1.35rem * var(--scale));
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+.back-link {
+  align-self: flex-start;
+  color: var(--navy);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  font-size: calc(0.78rem * var(--scale));
+  text-decoration: none;
 }
 
 .composer {
@@ -637,6 +746,135 @@ html[data-size="md"] .summary { min-height: 250px; }
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
+
+.folds { display: flex; flex-direction: column; gap: 10px; }
+
+.fold {
+  background: #fff;
+  border: 4px solid #fff;
+  border-radius: 26px;
+  overflow: hidden;
+}
+
+.fold.found {
+  background: #e7f6ec;
+  border-color: #d3eadc;
+}
+
+.fold-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-align: left;
+  min-height: 58px;
+  padding: 12px 16px;
+  line-height: 1.2;
+}
+
+.fold-head span { overflow-wrap: anywhere; }
+
+.fold-head b {
+  font-size: calc(1.45rem * var(--scale));
+  line-height: 1;
+}
+
+.fold-head svg {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  transition: transform 0.2s ease;
+}
+
+.fold-head[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.fold-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px 14px;
+}
+
+.profile-mini {
+  background: #fff;
+  color: var(--navy);
+  border-radius: 18px;
+  padding: 12px 14px;
+}
+
+.fold.found .profile-mini { background: #f7fcf8; }
+
+.profile-fold {
+  background: #f7fcf8;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.profile-fold-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--navy);
+  font-weight: 800;
+  text-align: left;
+  min-height: 48px;
+  padding: 10px 14px;
+  line-height: 1.25;
+}
+
+.profile-fold-head span { overflow-wrap: anywhere; }
+
+.profile-fold-head svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  transition: transform 0.2s ease;
+}
+
+.profile-fold-head[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+.profile-fold-body {
+  padding: 0 14px 12px;
+}
+
+.profile-mini.nested {
+  background: transparent;
+  padding: 0;
+}
+
+.profile-mini h3 {
+  margin: 0 0 6px;
+  font-size: calc(1rem * var(--scale));
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.profile-mini ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+}
+
+.profile-mini li {
+  font-size: calc(0.78rem * var(--scale));
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.profile-mini .traits { margin-top: 8px; font-size: calc(0.78rem * var(--scale)); }
 
 .stats {
   display: grid;
@@ -723,6 +961,47 @@ html[data-size="md"] .summary { min-height: 250px; }
 
 .card .field input, .card .field select { background: white; }
 .panel .field input, .panel .field select { background: #eef1f6; }
+
+.fold .field input,
+.fold .field select {
+  background: #f3f5f8;
+  border: 2px solid #8d98ae;
+}
+
+.fold .field input:focus,
+.fold .field select:focus {
+  background: #fff;
+  border-color: var(--navy);
+  outline: 2px solid var(--navy);
+  outline-offset: 1px;
+}
+
+.contact-block { margin: 4px 0 10px; }
+.contact-label {
+  margin: 8px 0 4px;
+  font-size: calc(0.7rem * var(--scale));
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+}
+.contact-row { margin-top: 8px; }
+.admin-hint {
+  margin: 0 0 10px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.admin-gate .form-error { color: var(--accent); }
+.admin-gate .field input {
+  background: #f3f5f8;
+  border: 2px solid #8d98ae;
+  color: var(--navy);
+}
+.admin-gate .field input:focus {
+  background: #fff;
+  border-color: var(--navy);
+  outline: 2px solid var(--navy);
+  outline-offset: 1px;
+}
 
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 html[data-size="lg"] .pair { grid-template-columns: 1fr; }
@@ -1007,5 +1286,5 @@ html[data-color="mono"] .view-registry {
 
 @container (max-width: 360px) {
   .pair { grid-template-columns: 1fr; }
-  .consultant h2 { font-size: calc(1.3rem * var(--scale)); }
+  .consultant h2 { font-size: calc(1.05rem * var(--scale)); }
 }
